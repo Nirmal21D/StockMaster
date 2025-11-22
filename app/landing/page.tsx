@@ -8,7 +8,7 @@ import { FeaturesSection } from '@/components/landing/FeaturesSection'
 import { ProcessFlowSection } from '@/components/landing/ProcessFlowSection'
 import { CTASection } from '@/components/landing/CTASection'
 import { Footer } from '@/components/landing/Footer'
-import { Home, ListChecks, Smartphone } from 'lucide-react'
+import { Home, Smartphone, Sparkles, GitBranch } from 'lucide-react'
 
 export default function LandingPage() {
   const router = useRouter()
@@ -67,9 +67,8 @@ export default function LandingPage() {
         <FloatingNav
           navItems={[
             { name: 'Home', link: '/landing', icon: <Home className="h-4 w-4" /> },
-            { name: 'Features', link: '#features', icon: <ListChecks className="h-4 w-4" /> },
-            { name: 'How It Works', link: '#how-it-works', icon: <ListChecks className="h-4 w-4" /> },
-            { name: 'Roles', link: '/roles', icon: <ListChecks className="h-4 w-4" /> },
+            { name: 'Features', link: '#features', icon: <Sparkles className="h-4 w-4" /> },
+            { name: 'How It Works', link: '#how-it-works', icon: <GitBranch className="h-4 w-4" /> },
             { name: 'Get Started', link: '/auth/signin', icon: <Smartphone className="h-4 w-4" /> },
           ]}
           hideOnScroll

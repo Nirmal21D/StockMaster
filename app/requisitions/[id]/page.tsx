@@ -123,7 +123,7 @@ export default function RequisitionDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-400">Loading requisition...</div>
+        <div className="text-muted-foreground">Loading requisition...</div>
       </div>
     );
   }
@@ -131,10 +131,10 @@ export default function RequisitionDetailPage() {
   if (!requisition) {
     return (
       <div className="space-y-6">
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error || 'Requisition not found'}
         </div>
-        <Link href="/requisitions" className="text-blue-400 hover:text-blue-300">
+        <Link href="/requisitions" className="text-primary hover:text-primary/80 transition-colors">
           ← Back to Requisitions
         </Link>
       </div>
@@ -147,13 +147,13 @@ export default function RequisitionDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/requisitions"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white">Requisition</h1>
-            <p className="text-gray-400 mt-1">{requisition.requisitionNumber}</p>
+            <h1 className="text-3xl font-bold text-foreground">Requisition</h1>
+            <p className="text-muted-foreground mt-1">{requisition.requisitionNumber}</p>
           </div>
         </div>
 
@@ -169,7 +169,7 @@ export default function RequisitionDetailPage() {
             <button
               onClick={() => handleSubmit('submit')}
               disabled={processing}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               Submit
             </button>
@@ -177,7 +177,7 @@ export default function RequisitionDetailPage() {
           {canApprove && (
             <button
               onClick={() => setShowApproveDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               Approve
@@ -186,7 +186,7 @@ export default function RequisitionDetailPage() {
           {canReject && (
             <button
               onClick={() => setShowRejectDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <XCircle className="w-4 h-4" />
               Reject
@@ -195,7 +195,7 @@ export default function RequisitionDetailPage() {
           {canCreateTransfer && (
             <Link
               href={`/transfers/new?requisitionId=${requisitionId}`}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-4 h-4" />
               Create Transfer
@@ -205,28 +205,28 @@ export default function RequisitionDetailPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error}
         </div>
       )}
 
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Requesting Warehouse
             </label>
-            <p className="text-white">
+            <p className="text-foreground">
               {requisition.requestingWarehouseId?.name} ({requisition.requestingWarehouseId?.code})
             </p>
           </div>
 
           {requisition.suggestedSourceWarehouseId && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Suggested Source
               </label>
-              <p className="text-white">
+              <p className="text-foreground">
                 {requisition.suggestedSourceWarehouseId?.name} ({requisition.suggestedSourceWarehouseId?.code})
               </p>
             </div>
@@ -234,83 +234,83 @@ export default function RequisitionDetailPage() {
 
           {requisition.finalSourceWarehouseId && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Final Source
               </label>
-              <p className="text-white">
+              <p className="text-foreground">
                 {requisition.finalSourceWarehouseId?.name} ({requisition.finalSourceWarehouseId?.code})
               </p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created By
             </label>
-            <p className="text-white">{requisition.createdBy?.name || '-'}</p>
+            <p className="text-foreground">{requisition.createdBy?.name || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created At
             </label>
-            <p className="text-white">{formatDate(requisition.createdAt)}</p>
+            <p className="text-foreground">{formatDate(requisition.createdAt)}</p>
           </div>
 
           {requisition.approvedBy && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Approved By
                 </label>
-                <p className="text-white">{requisition.approvedBy?.name || '-'}</p>
+                <p className="text-foreground">{requisition.approvedBy?.name || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Approved At
                 </label>
-                <p className="text-white">{formatDate(requisition.approvedAt!)}</p>
+                <p className="text-foreground">{formatDate(requisition.approvedAt!)}</p>
               </div>
             </>
           )}
 
           {requisition.rejectedReason && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Rejection Reason
               </label>
-              <p className="text-red-400">{requisition.rejectedReason}</p>
+              <p className="text-destructive">{requisition.rejectedReason}</p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-gray-800 pt-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Products</h2>
-          <div className="bg-gray-800 rounded-lg overflow-hidden">
+        <div className="border-t border-black/10 dark:border-white/10 pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Products</h2>
+          <div className="bg-muted/30 rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
             <table className="w-full">
-              <thead className="bg-gray-900">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Product
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                     Quantity Requested
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Needed By
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5">
                 {requisition.lines?.map((line: any, index: number) => (
                   <tr key={index}>
-                    <td className="px-4 py-3 text-white">
+                    <td className="px-4 py-3 text-foreground">
                       [{line.productId?.sku}] {line.productId?.name}
                     </td>
-                    <td className="px-4 py-3 text-right text-white">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {line.quantityRequested} {line.productId?.unit}
                     </td>
-                    <td className="px-4 py-3 text-gray-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {line.neededByDate ? formatDate(line.neededByDate) : '-'}
                     </td>
                   </tr>
@@ -323,18 +323,18 @@ export default function RequisitionDetailPage() {
 
       {/* Approve Dialog */}
       {showApproveDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Approve Requisition</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card/95 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-foreground mb-4">Approve Requisition</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Final Source Warehouse
                 </label>
                 <select
                   value={finalSourceWarehouse}
                   onChange={(e) => setFinalSourceWarehouse(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select warehouse</option>
                   {warehouses.map((wh) => (
@@ -347,14 +347,14 @@ export default function RequisitionDetailPage() {
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowApproveDialog(false)}
-                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+                  className="px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleSubmit('approve')}
                   disabled={processing}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   {processing ? 'Approving...' : 'Approve'}
                 </button>
@@ -366,18 +366,18 @@ export default function RequisitionDetailPage() {
 
       {/* Reject Dialog */}
       {showRejectDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Reject Requisition</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card/95 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-foreground mb-4">Reject Requisition</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Reason
                 </label>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={3}
                   placeholder="Enter rejection reason"
                 />
@@ -385,14 +385,14 @@ export default function RequisitionDetailPage() {
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowRejectDialog(false)}
-                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+                  className="px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleSubmit('reject')}
                   disabled={processing || !rejectReason}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white rounded-lg"
+                  className="px-4 py-2 bg-destructive hover:bg-destructive/90 disabled:bg-muted text-destructive-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   {processing ? 'Rejecting...' : 'Reject'}
                 </button>

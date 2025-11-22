@@ -49,15 +49,18 @@ export function WarehouseFilter() {
 
   return (
     <div className="flex items-center gap-2">
-      <WarehouseIcon className="w-4 h-4 text-gray-400" />
+      <WarehouseIcon className="w-4 h-4 text-muted-foreground" />
       <select
         value={selectedWarehouse}
         onChange={(e) => handleChange(e.target.value)}
-        className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="px-3 py-2 bg-background border border-black/10 dark:border-white/10 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 hover:bg-muted/50"
+        style={{
+          backgroundImage: 'none'
+        }}
       >
-        <option value="">All Warehouses</option>
+        <option value="" className="bg-background text-foreground">All Warehouses</option>
         {Array.isArray(warehouses) && warehouses.map((wh) => (
-          <option key={wh._id} value={wh._id}>
+          <option key={wh._id} value={wh._id} className="bg-background text-foreground">
             {wh.name} ({wh.code})
           </option>
         ))}

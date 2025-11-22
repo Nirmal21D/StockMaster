@@ -61,11 +61,11 @@ export default function DeliveriesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Deliveries</h1>
+        <h1 className="text-3xl font-bold text-foreground">Deliveries</h1>
         {canCreate && (
           <Link
             href="/deliveries/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
             New Delivery
@@ -75,25 +75,25 @@ export default function DeliveriesPage() {
 
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search deliveries by reference or contact..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading deliveries...</div>
+        <div className="text-center py-12 text-muted-foreground">Loading deliveries...</div>
       ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -113,19 +113,19 @@ export default function DeliveriesPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {deliveries.map((delivery) => (
-                <tr key={delivery._id} className="hover:bg-gray-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                <tr key={delivery._id} className="hover:bg-muted/30 transition-colors duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {delivery.deliveryNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {delivery.warehouseId?.code || delivery.warehouseId?.name || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {delivery.customerName || 'vendor'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(delivery.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -140,7 +140,7 @@ export default function DeliveriesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
                       href={`/deliveries/${delivery._id}`}
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-primary hover:text-primary/80 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
@@ -150,7 +150,7 @@ export default function DeliveriesPage() {
             </tbody>
           </table>
           {deliveries.length === 0 && (
-            <div className="text-center py-12 text-gray-400">No deliveries found</div>
+            <div className="text-center py-12 text-muted-foreground">No deliveries found</div>
           )}
         </div>
       )}

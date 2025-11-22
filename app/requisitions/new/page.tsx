@@ -123,30 +123,30 @@ export default function NewRequisitionPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/requisitions"
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
-        <h1 className="text-3xl font-bold text-white">New Requisition</h1>
+        <h1 className="text-3xl font-bold text-foreground">New Requisition</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         {error && (
-          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+          <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Requesting Warehouse *
             </label>
             <select
               required
               value={formData.requestingWarehouseId}
               onChange={(e) => setFormData({ ...formData, requestingWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select warehouse</option>
               {warehouses.map((wh) => (
@@ -158,13 +158,13 @@ export default function NewRequisitionPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Suggested Source Warehouse
             </label>
             <select
               value={formData.suggestedSourceWarehouseId}
               onChange={(e) => setFormData({ ...formData, suggestedSourceWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">No suggestion</option>
               {warehouses
@@ -178,13 +178,13 @@ export default function NewRequisitionPage() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-6">
+        <div className="border-t border-black/10 dark:border-white/10 pt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Products</h2>
+            <h2 className="text-lg font-semibold text-foreground">Products</h2>
             <button
               type="button"
               onClick={addLine}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-4 h-4" />
               Add Product
@@ -195,17 +195,17 @@ export default function NewRequisitionPage() {
             {lines.map((line, index) => (
               <div
                 key={index}
-                className="grid grid-cols-12 gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700"
+                className="grid grid-cols-12 gap-4 p-4 bg-muted/30 rounded-lg border border-black/10 dark:border-white/10"
               >
                 <div className="col-span-5">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Product *
                   </label>
                   <select
                     required
                     value={line.productId}
                     onChange={(e) => updateLine(index, 'productId', e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">Select product</option>
                     {products.map((product) => (
@@ -217,7 +217,7 @@ export default function NewRequisitionPage() {
                 </div>
 
                 <div className="col-span-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Quantity Requested *
                   </label>
                   <input
@@ -226,19 +226,19 @@ export default function NewRequisitionPage() {
                     min="1"
                     value={line.quantityRequested}
                     onChange={(e) => updateLine(index, 'quantityRequested', parseInt(e.target.value) || 1)}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <div className="col-span-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Needed By Date
                   </label>
                   <input
                     type="date"
                     value={line.neededByDate}
                     onChange={(e) => updateLine(index, 'neededByDate', e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
@@ -247,7 +247,7 @@ export default function NewRequisitionPage() {
                     <button
                       type="button"
                       onClick={() => removeLine(index)}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+                      className="p-2 text-destructive hover:text-destructive/80 hover:bg-destructive/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -258,17 +258,17 @@ export default function NewRequisitionPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-black/10 dark:border-white/10">
           <Link
             href="/requisitions"
-            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Save className="w-4 h-4" />
             {loading ? 'Creating...' : 'Create Requisition'}

@@ -19,17 +19,38 @@ interface KPICardProps {
   value: number;
   icon: React.ReactNode;
   href?: string;
-  color: string;
+  description?: string;
+  trend?: { value: number; label: string };
 }
 
-function KPICard({ title, value, icon, href, color }: KPICardProps) {
+function KPICard({ title, value, icon, href, description, trend }: KPICardProps) {
   const content = (
-    <div className={`p-6 rounded-xl border ${color} bg-gray-900/50 backdrop-blur-sm hover:scale-105 transition-transform cursor-pointer`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-400">{title}</h3>
-        <div className="text-gray-500">{icon}</div>
+    <div className="p-6 rounded-xl border border-black/10 dark:border-white/10 bg-card/50 backdrop-blur-xl hover:shadow-xl transition-all duration-300 cursor-pointer shadow-lg group">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="text-muted-foreground/70 group-hover:text-foreground/70 transition-colors">
+              {icon}
+            </div>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</h3>
+          </div>
+          {description && (
+            <p className="text-xs text-muted-foreground/60 mt-1">{description}</p>
+          )}
+        </div>
       </div>
-      <div className="text-3xl font-bold text-white">{value}</div>
+      
+      <div className="flex items-end justify-between mt-4">
+        <div className="text-4xl font-bold text-foreground">{value}</div>
+        {trend && (
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground/60">{trend.label}</div>
+            <div className={`text-sm font-semibold ${trend.value > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+              {trend.value > 0 ? '+' : ''}{trend.value}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -96,41 +117,43 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
           title="Total SKUs"
           value={data.totalSKUs}
           icon={<Package className="w-6 h-6" />}
-          color="border-blue-500/50"
+          description="Active products in inventory"
         />
         <KPICard
           title="Low Stock Items"
           value={data.lowStockCount}
           icon={<AlertTriangle className="w-6 h-6" />}
           href="/products?filter=low-stock"
-          color="border-red-500/50"
+          description="Products below reorder point"
+          trend={{ value: data.lowStockCount, label: 'Requires attention' }}
         />
         <KPICard
           title="Pending Requisitions"
           value={data.pendingRequisitions}
           icon={<FileText className="w-6 h-6" />}
           href="/requisitions?status=SUBMITTED"
-          color="border-yellow-500/50"
+          description="Awaiting approval or fulfillment"
         />
         <KPICard
           title="Pending Transfers"
           value={data.pendingTransfers}
           icon={<Truck className="w-6 h-6" />}
           href="/transfers?status=DRAFT"
-          color="border-purple-500/50"
+          description="In-transit between warehouses"
         />
         <KPICard
           title="Slow/Dead Stock"
           value={data.slowDeadStockCount}
           icon={<Clock className="w-6 h-6" />}
           href="/analytics/slow-stock"
-          color="border-orange-500/50"
+          description="No movement in 90+ days"
+          trend={{ value: data.slowDeadStockCount, label: 'Total items' }}
         />
         <KPICard
           title="Stockout Events (30d)"
           value={data.stockoutEvents}
           icon={<TrendingDown className="w-6 h-6" />}
-          color="border-pink-500/50"
+          description="Zero-stock occurrences last month"
         />
       </div>
     </div>

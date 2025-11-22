@@ -79,62 +79,46 @@ export default function ReceiptsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Import Success Message */}
-      {showImportSuccess && (
-        <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 flex items-center space-x-3">
-          <CheckCircle className="w-5 h-5 text-green-400" />
-          <div className="flex-1">
-            <h3 className="text-green-400 font-medium">Import Successful!</h3>
-            <p className="text-gray-300 text-sm">
-              Receipts imported successfully.
-              {searchParams?.get('created') && ` ${searchParams.get('created')} created.`}
-              {searchParams?.get('updated') && ` ${searchParams.get('updated')} updated.`}
-            </p>
+    <div className="flex flex-col h-full">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/10 dark:border-white/10">
+        <div className="flex items-center gap-4">
+          {canCreate && (
+            <Link
+              href="/receipts/new"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-5 h-5" />
+              NEW
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold text-foreground">Receipts</h1>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-4 py-2 w-64 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
-          <button
-            onClick={() => setShowImportSuccess(false)}
-            className="text-green-400 hover:text-green-300"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Receipts</h1>
-        {canCreate && (
-          <Link
-            href="/receipts/new-enhanced"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Receipts
-          </Link>
-        )}
-      </div>
-
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search receipts..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading receipts...</div>
-      ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-800">
+      {/* Table Container */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading receipts...</div>
+        ) : (
+          <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
+            <table className="w-full">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium  text-gray-400 uppercase tracking-wider">
                   Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -163,16 +147,16 @@ export default function ReceiptsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                     {receipt.receiptNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {receipt.supplierName || 'vendor'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {receipt.warehouseId?.code || receipt.warehouseId?.name || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {receipt.supplierName || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(receipt.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -187,7 +171,7 @@ export default function ReceiptsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
                       href={`/receipts/${receipt._id}`}
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-primary hover:text-primary/80 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
@@ -201,6 +185,7 @@ export default function ReceiptsPage() {
           )}
         </div>
       )}
+    </div>
     </div>
   );
 }

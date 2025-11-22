@@ -56,28 +56,28 @@ export default function LedgerPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Move History</h1>
+        <h1 className="text-3xl font-bold text-foreground">Move History</h1>
       </div>
 
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search movements..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading movements...</div>
+        <div className="text-center py-12 text-muted-foreground">Loading movements...</div>
       ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -100,24 +100,24 @@ export default function LedgerPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {movements.map((movement) => (
                 <tr
                   key={movement._id}
-                  className={`hover:bg-gray-800/50 ${
+                  className={`hover:bg-muted/30 transition-colors duration-200 ${
                     movement.type === 'RECEIPT' ? 'bg-green-500/5' : ''
                   } ${movement.type === 'DELIVERY' ? 'bg-red-500/5' : ''}`}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(movement.createdAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {movement.productId?.name || movement.productId?.sku || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {movement.warehouseFromId?.name || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {movement.warehouseToId?.name || '-'}
                   </td>
                   <td
@@ -137,7 +137,7 @@ export default function LedgerPage() {
                       {movement.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {movement.createdBy?.name || '-'}
                   </td>
                 </tr>
@@ -145,7 +145,7 @@ export default function LedgerPage() {
             </tbody>
           </table>
           {movements.length === 0 && (
-            <div className="text-center py-12 text-gray-400">No movements found</div>
+            <div className="text-center py-12 text-muted-foreground">No movements found</div>
           )}
         </div>
       )}

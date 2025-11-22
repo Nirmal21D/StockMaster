@@ -21,7 +21,7 @@ export default async function LocationsLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-950">
+    <div className="flex min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <div className="flex-1 flex flex-col">
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
