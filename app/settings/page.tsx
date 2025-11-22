@@ -54,33 +54,37 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-white">Settings</h1>
 
-      {canManage ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Link
-            href="/settings/warehouses"
-            className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-blue-500 transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Warehouse className="w-6 h-6 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">Warehouses</h2>
-            </div>
-            <p className="text-gray-400">Manage warehouses and their details</p>
-          </Link>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Link
+          href="/settings/warehouses"
+          className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-blue-500 transition-colors"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <Warehouse className="w-6 h-6 text-blue-400" />
+            <h2 className="text-xl font-semibold text-white">Warehouses</h2>
+          </div>
+          <p className="text-gray-400">
+            {canManage ? 'Manage warehouses and their details' : 'View warehouses (read-only)'}
+          </p>
+        </Link>
 
-          <Link
-            href="/settings/locations"
-            className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-green-500 transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <MapPin className="w-6 h-6 text-green-400" />
-              <h2 className="text-xl font-semibold text-white">Locations</h2>
-            </div>
-            <p className="text-gray-400">Manage locations within warehouses</p>
-          </Link>
-        </div>
-      ) : (
+        <Link
+          href="/settings/locations"
+          className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-green-500 transition-colors"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <MapPin className="w-6 h-6 text-green-400" />
+            <h2 className="text-xl font-semibold text-white">Locations</h2>
+          </div>
+          <p className="text-gray-400">
+            {canManage ? 'Manage locations within warehouses' : 'View locations (read-only)'}
+          </p>
+        </Link>
+      </div>
+
+      {!canManage && (
         <div className="p-4 bg-yellow-500/20 border border-yellow-500 rounded-lg text-yellow-400">
-          You don't have permission to manage settings. Only administrators can access this page.
+          You are viewing settings in read-only mode. Only administrators can create, edit, or delete warehouses and locations.
         </div>
       )}
 

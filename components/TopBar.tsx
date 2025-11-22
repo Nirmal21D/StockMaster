@@ -1,12 +1,36 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
+import { WarehouseFilter } from './WarehouseFilter';
+
+const pageTitles: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/products': 'Products',
+  '/receipts': 'Receipts',
+  '/deliveries': 'Deliveries',
+  '/requisitions': 'Requisitions',
+  '/transfers': 'Transfers',
+  '/adjustments': 'Adjustments',
+  '/ledger': 'Move History',
+  '/settings': 'Settings',
+};
+
+function getPageTitle(pathname: string): string {
+  for (const [path, title] of Object.entries(pageTitles)) {
+    if (pathname === path || pathname?.startsWith(path + '/')) {
+      return title;
+    }
+  }
+  return 'StockMaster';
+}
 
 export function TopBar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const pageTitle = getPageTitle(pathname || '');
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -16,7 +40,8 @@ export function TopBar() {
   return (
     <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-xl font-semibold text-white">Dashboard</h2>
+        <h2 className="text-xl font-semibold text-white">{pageTitle}</h2>
+        <WarehouseFilter />
       </div>
 
       <div className="flex items-center gap-4">

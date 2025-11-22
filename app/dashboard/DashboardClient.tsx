@@ -42,34 +42,44 @@ function KPICard({ title, value, icon, href, color }: KPICardProps) {
 export default function DashboardClient({ initialData }: { initialData: DashboardData }) {
   const [data, setData] = useState<DashboardData>(initialData);
   const [loading, setLoading] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
 
   useEffect(() => {
-    if (selectedWarehouse) {
-      setLoading(true);
-      fetch(`/api/dashboard?warehouseId=${selectedWarehouse}`)
-        .then((res) => res.json())
-        .then((newData) => {
-          setData(newData);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [selectedWarehouse]);
+    const updateFromUrl = () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const warehouseParam = params.get('warehouse') || '';
+      
+      if (warehouseParam) {
+        setLoading(true);
+        fetch(`/api/dashboard?warehouseId=${warehouseParam}`)
+          .then((res) => res.json())
+          .then((newData) => {
+            setData(newData);
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
+      } else {
+        setData(initialData);
+      }
+    };
+
+    updateFromUrl();
+    // Listen for URL changes (from WarehouseFilter component)
+    window.addEventListener('popstate', updateFromUrl);
+    // Also check periodically in case WarehouseFilter updates URL via router.push
+    const interval = setInterval(updateFromUrl, 300);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('popstate', updateFromUrl);
+    };
+  }, [initialData]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <select
-          value={selectedWarehouse}
-          onChange={(e) => setSelectedWarehouse(e.target.value)}
-          className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-        >
-          <option value="">All Warehouses</option>
-          {/* Warehouse options will be loaded dynamically */}
-        </select>
-      </div>
+      {loading && (
+        <div className="text-center text-gray-400 py-4">Loading dashboard data...</div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <KPICard

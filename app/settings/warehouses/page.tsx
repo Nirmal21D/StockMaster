@@ -33,12 +33,8 @@ export default function WarehousesPage() {
   const canManage = userRole === 'ADMIN';
 
   useEffect(() => {
-    if (!canManage) {
-      router.push('/settings');
-      return;
-    }
     fetchWarehouses();
-  }, [canManage]);
+  }, []);
 
   const fetchWarehouses = async () => {
     try {
@@ -114,19 +110,28 @@ export default function WarehousesPage() {
           >
             <ArrowLeft className="w-5 h-5 text-gray-400" />
           </Link>
-          <h1 className="text-3xl font-bold text-white">Manage Warehouses</h1>
+          <h1 className="text-3xl font-bold text-white">
+            {canManage ? 'Manage Warehouses' : 'Warehouses'}
+          </h1>
         </div>
-        <button
-          onClick={() => {
-            setShowForm(true);
-            setEditingWarehouse(null);
-            setFormData({ name: '', code: '', address: '', description: '' });
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          New Warehouse
-        </button>
+        {canManage && (
+          <button
+            onClick={() => {
+              setShowForm(true);
+              setEditingWarehouse(null);
+              setFormData({ name: '', code: '', address: '', description: '' });
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            New Warehouse
+          </button>
+        )}
+        {!canManage && (
+          <div className="px-4 py-2 text-sm text-gray-400 bg-gray-800 rounded-lg">
+            Read-only mode
+          </div>
+        )}
       </div>
 
       {showForm && (
@@ -231,20 +236,25 @@ export default function WarehousesPage() {
                   <td className="px-6 py-4 text-gray-300">{warehouse.code}</td>
                   <td className="px-6 py-4 text-gray-400">{warehouse.address || '-'}</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(warehouse)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(warehouse._id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {canManage && (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(warehouse)}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(warehouse._id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    {!canManage && (
+                      <span className="text-gray-500 text-sm">View only</span>
+                    )}
                   </td>
                 </tr>
               ))}

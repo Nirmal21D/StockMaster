@@ -7,8 +7,11 @@ export interface IUser extends Document {
   emailVerified?: Date | null;
   image?: string | null;
   password?: string;
-  role: 'ADMIN' | 'OPERATOR' | 'MANAGER';
-  isActive: boolean;
+  role: 'ADMIN' | 'OPERATOR' | 'MANAGER' | null;
+  status: 'PENDING' | 'ACTIVE' | 'INACTIVE';
+  assignedWarehouses: mongoose.Types.ObjectId[];
+  primaryWarehouseId?: mongoose.Types.ObjectId | null;
+  isActive: boolean; // Legacy field, kept for backward compatibility
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,9 +25,24 @@ const UserSchema = new Schema<IUser>(
     password: { type: String },
     role: {
       type: String,
-      enum: ['ADMIN', 'OPERATOR', 'MANAGER'],
-      required: true,
-      default: 'OPERATOR',
+      enum: ['ADMIN', 'OPERATOR', 'MANAGER', null],
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ['PENDING', 'ACTIVE', 'INACTIVE'],
+      default: 'PENDING',
+    },
+    assignedWarehouses: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Warehouse',
+      },
+    ],
+    primaryWarehouseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Warehouse',
+      default: null,
     },
     isActive: { type: Boolean, default: true },
   },
@@ -34,6 +52,8 @@ const UserSchema = new Schema<IUser>(
 );
 
 UserSchema.index({ role: 1 });
+UserSchema.index({ status: 1 });
+UserSchema.index({ email: 1 }, { unique: true });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 

@@ -57,13 +57,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
+    const session = await requireRole(request, ['ADMIN']);
     if (session instanceof NextResponse) return session;
-
-    const userRole = (session.user as any)?.role;
-    if (userRole !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
 
     await connectDB();
 
