@@ -15,16 +15,12 @@ export default async function WarehousesLayout({
     redirect('/auth/signin');
   }
 
-  const userRole = (session.user as any)?.role;
-  if (userRole !== 'ADMIN') {
-    redirect('/settings');
-  }
+  // Allow all authenticated users to view warehouses (read-only for non-admins)
+  // Role-based UI controls are handled in the page component
 
   return (
     <div className="flex min-h-screen bg-gray-950">
-      <Sidebar />
       <div className="flex-1 flex flex-col">
-        <TopBar />
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
     </div>

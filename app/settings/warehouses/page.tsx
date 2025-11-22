@@ -39,10 +39,20 @@ export default function WarehousesPage() {
   const fetchWarehouses = async () => {
     try {
       const res = await fetch('/api/warehouses');
+      if (!res.ok) {
+        throw new Error('Failed to fetch warehouses');
+      }
       const data = await res.json();
-      setWarehouses(data || []);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setWarehouses(data);
+      } else {
+        console.error('Invalid response format:', data);
+        setWarehouses([]);
+      }
     } catch (error) {
       console.error('Failed to fetch warehouses:', error);
+      setWarehouses([]);
     } finally {
       setLoading(false);
     }
@@ -62,14 +72,17 @@ export default function WarehousesPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error('Failed to save warehouse');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to save warehouse');
+      }
 
       setShowForm(false);
       setEditingWarehouse(null);
       setFormData({ name: '', code: '', address: '', description: '' });
       fetchWarehouses();
     } catch (error: any) {
-      alert(error.message);
+      alert(error.message || 'An error occurred while saving the warehouse');
     }
   };
 
@@ -89,16 +102,17 @@ export default function WarehousesPage() {
 
     try {
       const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete warehouse');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to delete warehouse');
+      }
       fetchWarehouses();
     } catch (error: any) {
-      alert(error.message);
+      alert(error.message || 'An error occurred while deleting the warehouse');
     }
   };
 
-  if (!canManage) {
-    return null;
-  }
+  // Allow all authenticated users to view, but only ADMIN can manage
 
   return (
     <div className="space-y-6">
