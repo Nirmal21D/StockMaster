@@ -113,7 +113,7 @@ export function FeaturesSection() {
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
             Everything You Need to
-            <span className="block mt-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="block mt-2 text-primary">
               Master Your Inventory
             </span>
           </h2>
