@@ -87,7 +87,7 @@ export default function TransfersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {transfers.map((transfer) => (
+              {Array.isArray(transfers) && transfers.map((transfer) => (
                 <tr key={transfer._id} className="hover:bg-gray-800/50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                     {transfer.transferNumber}

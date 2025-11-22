@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 
 interface Product {
   _id: string;
@@ -18,12 +19,27 @@ interface Product {
 
 export default function ProductsPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showImportSuccess, setShowImportSuccess] = useState(false);
 
   const userRole = (session?.user as any)?.role;
   const canCreate = userRole === 'ADMIN' || userRole === 'MANAGER';
+
+  // Check for import success message
+  useEffect(() => {
+    const importSuccess = searchParams?.get('import_success');
+    const created = searchParams?.get('created');
+    const updated = searchParams?.get('updated');
+    
+    if (importSuccess === 'true') {
+      setShowImportSuccess(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowImportSuccess(false), 5000);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchProducts();
@@ -35,9 +51,19 @@ export default function ProductsPage() {
       const url = search ? `/api/products?search=${encodeURIComponent(search)}` : '/api/products';
       const res = await fetch(url);
       const data = await res.json();
-      setProducts(data.products || []);
+      
+      // Handle both success and error responses
+      if (data && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else if (data && data.error) {
+        console.error('API Error:', data.error);
+        setProducts([]);
+      } else {
+        setProducts([]);
+      }
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -65,15 +91,36 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Import Success Message */}
+      {showImportSuccess && (
+        <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 flex items-center space-x-3">
+          <CheckCircle className="w-5 h-5 text-green-400" />
+          <div className="flex-1">
+            <h3 className="text-green-400 font-medium">Import Successful!</h3>
+            <p className="text-gray-300 text-sm">
+              Products imported successfully.
+              {searchParams?.get('created') && ` ${searchParams.get('created')} created.`}
+              {searchParams?.get('updated') && ` ${searchParams.get('updated')} updated.`}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowImportSuccess(false)}
+            className="text-green-400 hover:text-green-300"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-white">Products</h1>
         {canCreate && (
           <Link
-            href="/products/new"
+            href="/products/new-enhanced"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
-            New Product
+            Add Products
           </Link>
         )}
       </div>
@@ -122,7 +169,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {products.map((product) => (
+              {Array.isArray(products) && products.map((product) => (
                 <tr key={product._id} className="hover:bg-gray-800/50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                     {product.sku}
@@ -172,7 +219,7 @@ export default function ProductsPage() {
               ))}
             </tbody>
           </table>
-          {products.length === 0 && (
+          {(!Array.isArray(products) || products.length === 0) && (
             <div className="text-center py-12 text-gray-400">No products found</div>
           )}
         </div>
