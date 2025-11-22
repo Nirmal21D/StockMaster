@@ -148,7 +148,7 @@ export default function WarehouseDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-400">Loading warehouse...</div>
+        <div className="text-muted-foreground">Loading warehouse...</div>
       </div>
     );
   }
@@ -156,10 +156,10 @@ export default function WarehouseDetailPage() {
   if (!warehouse) {
     return (
       <div className="space-y-6">
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           Warehouse not found
         </div>
-        <Link href="/settings/warehouses" className="text-blue-400 hover:text-blue-300">
+        <Link href="/settings/warehouses" className="text-primary hover:text-primary/80 transition-colors">
           ← Back to Warehouses
         </Link>
       </div>
@@ -176,19 +176,19 @@ export default function WarehouseDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/settings/warehouses"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white">{warehouse.name}</h1>
-            <p className="text-gray-400 mt-1">Code: {warehouse.code}</p>
+            <h1 className="text-3xl font-bold text-foreground">{warehouse.name}</h1>
+            <p className="text-muted-foreground mt-1">Code: {warehouse.code}</p>
           </div>
         </div>
         {canManage && (
           <Link
             href={`/settings/warehouses?edit=${warehouseId}`}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Edit className="w-4 h-4" />
             Edit Warehouse
@@ -197,27 +197,27 @@ export default function WarehouseDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Warehouse Information</h2>
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Warehouse Information</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
-              <p className="text-white">{warehouse.name}</p>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Name</label>
+              <p className="text-foreground">{warehouse.name}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Code</label>
-              <p className="text-white">{warehouse.code}</p>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Code</label>
+              <p className="text-foreground">{warehouse.code}</p>
             </div>
             {warehouse.address && (
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Address</label>
-                <p className="text-white">{warehouse.address}</p>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Address</label>
+                <p className="text-foreground">{warehouse.address}</p>
               </div>
             )}
             {warehouse.description && (
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
-                <p className="text-white">{warehouse.description}</p>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Description</label>
+                <p className="text-foreground">{warehouse.description}</p>
               </div>
             )}
             <div>
@@ -236,16 +236,16 @@ export default function WarehouseDetailPage() {
         </div>
 
         {canManage && (
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+          <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 Assigned Workers
               </h2>
               {availableUsers.length > 0 && (
                 <button
                   onClick={() => setShowAddUser(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <Plus className="w-4 h-4" />
                   Add Worker
@@ -282,11 +282,11 @@ export default function WarehouseDetailPage() {
             )}
 
             {assignedUsers.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No workers assigned</p>
                 {availableUsers.length === 0 && (
-                  <p className="text-xs mt-2 text-gray-500">
+                  <p className="text-xs mt-2 text-muted-foreground/70">
                     No available users to assign (all MANAGER/OPERATOR users are already assigned)
                   </p>
                 )}
@@ -296,11 +296,11 @@ export default function WarehouseDetailPage() {
                 {assignedUsers.map((user) => (
                   <div
                     key={user._id}
-                    className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-black/10 dark:border-white/10"
                   >
                     <div>
-                      <p className="text-white font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-400">{user.email}</p>
+                      <p className="text-foreground font-medium">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
                       <span
                         className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
                           user.role === 'MANAGER'
@@ -313,7 +313,7 @@ export default function WarehouseDetailPage() {
                     </div>
                     <button
                       onClick={() => handleRemoveUser(user._id)}
-                      className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                      className="p-1.5 text-destructive hover:text-destructive/80 hover:bg-destructive/10 rounded transition-colors"
                       title="Remove from warehouse"
                     >
                       <X className="w-4 h-4" />

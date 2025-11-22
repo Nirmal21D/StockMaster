@@ -51,10 +51,10 @@ export default function RequisitionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Requisitions</h1>
+        <h1 className="text-3xl font-bold text-foreground">Requisitions</h1>
         <Link
           href="/requisitions/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           <Plus className="w-5 h-5" />
           New Requisition
@@ -62,13 +62,13 @@ export default function RequisitionsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading requisitions...</div>
+        <div className="text-center py-12 text-muted-foreground">Loading requisitions...</div>
       ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -85,13 +85,13 @@ export default function RequisitionsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {requisitions.map((req) => (
-                <tr key={req._id} className="hover:bg-gray-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                <tr key={req._id} className="hover:bg-muted/30 transition-colors duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {req.requisitionNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {req.requestingWarehouseId?.name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -103,13 +103,13 @@ export default function RequisitionsPage() {
                       {req.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(req.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
                       href={`/requisitions/${req._id}`}
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-primary hover:text-primary/80 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                     </Link>
@@ -119,7 +119,7 @@ export default function RequisitionsPage() {
             </tbody>
           </table>
           {requisitions.length === 0 && (
-            <div className="text-center py-12 text-gray-400">No requisitions found</div>
+            <div className="text-center py-12 text-muted-foreground">No requisitions found</div>
           )}
         </div>
       )}

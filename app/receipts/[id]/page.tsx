@@ -93,7 +93,7 @@ export default function ReceiptDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-400">Loading receipt...</div>
+        <div className="text-muted-foreground">Loading receipt...</div>
       </div>
     );
   }
@@ -101,10 +101,10 @@ export default function ReceiptDetailPage() {
   if (!receipt) {
     return (
       <div className="space-y-6">
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error || 'Receipt not found'}
         </div>
-        <Link href="/receipts" className="text-blue-400 hover:text-blue-300">
+        <Link href="/receipts" className="text-primary hover:text-primary/80 transition-colors">
           ← Back to Receipts
         </Link>
       </div>
@@ -117,13 +117,13 @@ export default function ReceiptDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/receipts"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white">Receipt</h1>
-            <p className="text-gray-400 mt-1">{receipt.receiptNumber}</p>
+            <h1 className="text-3xl font-bold text-foreground">Receipt</h1>
+            <p className="text-muted-foreground mt-1">{receipt.receiptNumber}</p>
           </div>
         </div>
 
@@ -139,13 +139,13 @@ export default function ReceiptDetailPage() {
             <button
               onClick={handleValidate}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Validating...' : 'Validate'}
             </button>
           )}
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300">
             <Printer className="w-4 h-4" />
             Print
           </button>
@@ -153,104 +153,104 @@ export default function ReceiptDetailPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error}
         </div>
       )}
 
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Supplier Name
             </label>
-            <p className="text-white">{receipt.supplierName || '-'}</p>
+            <p className="text-foreground">{receipt.supplierName || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Warehouse
             </label>
-            <p className="text-white">
+            <p className="text-foreground">
               {receipt.warehouseId?.name} ({receipt.warehouseId?.code})
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Reference
             </label>
-            <p className="text-white">{receipt.reference || '-'}</p>
+            <p className="text-foreground">{receipt.reference || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created By
             </label>
-            <p className="text-white">{receipt.createdBy?.name || '-'}</p>
+            <p className="text-foreground">{receipt.createdBy?.name || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created At
             </label>
-            <p className="text-white">{formatDate(receipt.createdAt)}</p>
+            <p className="text-foreground">{formatDate(receipt.createdAt)}</p>
           </div>
 
           {receipt.validatedBy && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Validated By
                 </label>
-                <p className="text-white">{receipt.validatedBy?.name || '-'}</p>
+                <p className="text-foreground">{receipt.validatedBy?.name || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Validated At
                 </label>
-                <p className="text-white">{formatDate(receipt.validatedAt!)}</p>
+                <p className="text-foreground">{formatDate(receipt.validatedAt!)}</p>
               </div>
             </>
           )}
 
           {receipt.notes && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Notes
               </label>
-              <p className="text-white">{receipt.notes}</p>
+              <p className="text-foreground">{receipt.notes}</p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-gray-800 pt-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Products</h2>
-          <div className="bg-gray-800 rounded-lg overflow-hidden">
+        <div className="border-t border-black/10 dark:border-white/10 pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Products</h2>
+          <div className="bg-muted/30 rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
             <table className="w-full">
-              <thead className="bg-gray-900">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Product
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Location
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                     Quantity
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5">
                 {receipt.lines?.map((line: any, index: number) => (
                   <tr key={index}>
-                    <td className="px-4 py-3 text-white">
+                    <td className="px-4 py-3 text-foreground">
                       [{line.productId?.sku}] {line.productId?.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {line.locationId?.name || '-'}
                     </td>
-                    <td className="px-4 py-3 text-right text-white">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {line.quantity} {line.productId?.unit}
                     </td>
                   </tr>

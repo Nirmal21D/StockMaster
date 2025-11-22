@@ -98,7 +98,7 @@ export default function DeliveryDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-400">Loading delivery...</div>
+        <div className="text-muted-foreground">Loading delivery...</div>
       </div>
     );
   }
@@ -106,10 +106,10 @@ export default function DeliveryDetailPage() {
   if (!delivery) {
     return (
       <div className="space-y-6">
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error || 'Delivery not found'}
         </div>
-        <Link href="/deliveries" className="text-blue-400 hover:text-blue-300">
+        <Link href="/deliveries" className="text-primary hover:text-primary/80 transition-colors">
           ← Back to Deliveries
         </Link>
       </div>
@@ -122,25 +122,25 @@ export default function DeliveryDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/deliveries"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white">Delivery</h1>
-            <p className="text-gray-400 mt-1">{delivery.deliveryNumber}</p>
+            <h1 className="text-3xl font-bold text-foreground">Delivery</h1>
+            <p className="text-muted-foreground mt-1">{delivery.deliveryNumber}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Draft</span>
-            <span className="text-gray-600">→</span>
-            <span className="text-sm text-gray-400">Waiting</span>
-            <span className="text-gray-600">→</span>
-            <span className="text-sm text-gray-400">Ready</span>
-            <span className="text-gray-600">→</span>
-            <span className="text-sm text-gray-400">Done</span>
+            <span className="text-sm text-muted-foreground">Draft</span>
+            <span className="text-muted-foreground/50">→</span>
+            <span className="text-sm text-muted-foreground">Waiting</span>
+            <span className="text-muted-foreground/50">→</span>
+            <span className="text-sm text-muted-foreground">Ready</span>
+            <span className="text-muted-foreground/50">→</span>
+            <span className="text-sm text-muted-foreground">Done</span>
           </div>
           <span
             className={`px-3 py-1 text-sm font-semibold rounded-full border ${getStatusColor(
@@ -153,13 +153,13 @@ export default function DeliveryDetailPage() {
             <button
               onClick={handleValidate}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Validating...' : 'Validate'}
             </button>
           )}
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300">
             <Printer className="w-4 h-4" />
             Print
           </button>
@@ -167,131 +167,131 @@ export default function DeliveryDetailPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
           {error}
         </div>
       )}
 
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Customer Name
             </label>
-            <p className="text-white">{delivery.customerName || '-'}</p>
+            <p className="text-foreground">{delivery.customerName || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Warehouse
             </label>
-            <p className="text-white">
+            <p className="text-foreground">
               {delivery.warehouseId?.name} ({delivery.warehouseId?.code})
             </p>
           </div>
 
           {delivery.deliveryAddress && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Delivery Address
               </label>
-              <p className="text-white">{delivery.deliveryAddress}</p>
+              <p className="text-foreground">{delivery.deliveryAddress}</p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Reference
             </label>
-            <p className="text-white">{delivery.reference || '-'}</p>
+            <p className="text-foreground">{delivery.reference || '-'}</p>
           </div>
 
           {delivery.scheduleDate && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Schedule Date
               </label>
-              <p className="text-white">{formatDate(delivery.scheduleDate)}</p>
+              <p className="text-foreground">{formatDate(delivery.scheduleDate)}</p>
             </div>
           )}
 
           {delivery.responsible && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Responsible
               </label>
-              <p className="text-white">{delivery.responsible}</p>
+              <p className="text-foreground">{delivery.responsible}</p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created By
             </label>
-            <p className="text-white">{delivery.createdBy?.name || '-'}</p>
+            <p className="text-foreground">{delivery.createdBy?.name || '-'}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Created At
             </label>
-            <p className="text-white">{formatDate(delivery.createdAt)}</p>
+            <p className="text-foreground">{formatDate(delivery.createdAt)}</p>
           </div>
 
           {delivery.validatedBy && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Validated By
                 </label>
-                <p className="text-white">{delivery.validatedBy?.name || '-'}</p>
+                <p className="text-foreground">{delivery.validatedBy?.name || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Validated At
                 </label>
-                <p className="text-white">{formatDate(delivery.validatedAt!)}</p>
+                <p className="text-foreground">{formatDate(delivery.validatedAt!)}</p>
               </div>
             </>
           )}
 
           {delivery.notes && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Notes
               </label>
-              <p className="text-white">{delivery.notes}</p>
+              <p className="text-foreground">{delivery.notes}</p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-gray-800 pt-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Products</h2>
-          <div className="bg-gray-800 rounded-lg overflow-hidden">
+        <div className="border-t border-black/10 dark:border-white/10 pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Products</h2>
+          <div className="bg-muted/30 rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
             <table className="w-full">
-              <thead className="bg-gray-900">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Product
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     From Location
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                     Quantity
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5">
                 {delivery.lines?.map((line: any, index: number) => (
                   <tr key={index}>
-                    <td className="px-4 py-3 text-white">
+                    <td className="px-4 py-3 text-foreground">
                       [{line.productId?.sku}] {line.productId?.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {line.fromLocationId?.name || '-'}
                     </td>
-                    <td className="px-4 py-3 text-right text-white">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {line.quantity} {line.productId?.unit}
                     </td>
                   </tr>

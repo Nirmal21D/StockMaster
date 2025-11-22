@@ -120,11 +120,11 @@ export default function WarehousesPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/settings"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             {canManage ? 'Manage Warehouses' : 'Warehouses'}
           </h1>
         </div>
@@ -135,27 +135,27 @@ export default function WarehousesPage() {
               setEditingWarehouse(null);
               setFormData({ name: '', code: '', address: '', description: '' });
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
             New Warehouse
           </button>
         )}
         {!canManage && (
-          <div className="px-4 py-2 text-sm text-gray-400 bg-gray-800 rounded-lg">
+          <div className="px-4 py-2 text-sm text-muted-foreground bg-muted/50 rounded-lg">
             Read-only mode
           </div>
         )}
       </div>
 
       {showForm && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             {editingWarehouse ? 'Edit Warehouse' : 'New Warehouse'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Name *
               </label>
               <input
@@ -163,11 +163,11 @@ export default function WarehousesPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Code *
               </label>
               <input
@@ -175,35 +175,35 @@ export default function WarehousesPage() {
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Address
               </label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 rows={3}
               />
             </div>
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 {editingWarehouse ? 'Update' : 'Create'}
               </button>
@@ -213,7 +213,7 @@ export default function WarehousesPage() {
                   setShowForm(false);
                   setEditingWarehouse(null);
                 }}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300"
               >
                 Cancel
               </button>
@@ -223,51 +223,51 @@ export default function WarehousesPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading warehouses...</div>
+        <div className="text-center py-12 text-muted-foreground">Loading warehouses...</div>
       ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Code
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Address
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {warehouses.map((warehouse) => (
-                <tr key={warehouse._id} className="hover:bg-gray-800/50">
-                  <td className="px-6 py-4 text-white">{warehouse.name}</td>
-                  <td className="px-6 py-4 text-gray-300">{warehouse.code}</td>
-                  <td className="px-6 py-4 text-gray-400">{warehouse.address || '-'}</td>
+                <tr key={warehouse._id} className="hover:bg-muted/30 transition-colors duration-200">
+                  <td className="px-6 py-4 text-foreground">{warehouse.name}</td>
+                  <td className="px-6 py-4 text-foreground">{warehouse.code}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{warehouse.address || '-'}</td>
                   <td className="px-6 py-4 text-right">
                     {canManage && (
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(warehouse)}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-primary hover:text-primary/80 transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(warehouse._id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="text-destructive hover:text-destructive/80 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     )}
                     {!canManage && (
-                      <span className="text-gray-500 text-sm">View only</span>
+                      <span className="text-muted-foreground text-sm">View only</span>
                     )}
                   </td>
                 </tr>

@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from './use-mobile'
 import { ThemeToggle } from './ThemeToggle'
@@ -22,10 +23,16 @@ interface FloatingNavProps {
 
 export function FloatingNav({ navItems, className, hideOnScroll = true, threshold = 32, sectionRefs }: FloatingNavProps) {
   const pathname = usePathname()
+  const { theme } = useTheme()
   const [visible, setVisible] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const lastY = useRef(0)
   const [atTop, setAtTop] = useState(true)
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     function onScroll() {
@@ -64,7 +71,12 @@ export function FloatingNav({ navItems, className, hideOnScroll = true, threshol
         {/* Logo */}
         {!isMobile && (
           <div className="flex items-center pl-2 pr-1">
-            <img src="/sm.png" alt="SM" className="h-8 w-auto" />
+            {mounted && (
+              <img src={theme === 'dark' ? '/app_dark.png' : '/sm.png'} alt="SM" className="h-8 w-auto" />
+            )}
+            {!mounted && (
+              <img src="/sm.png" alt="SM" className="h-8 w-auto" />
+            )}
           </div>
         )}
         

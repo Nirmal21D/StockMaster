@@ -56,26 +56,26 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Link
           href="/settings/warehouses"
-          className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-blue-500 transition-colors"
+          className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           <div className="flex items-center gap-3 mb-4">
             <Warehouse className="w-6 h-6 text-blue-400" />
-            <h2 className="text-xl font-semibold text-white">Warehouses</h2>
+            <h2 className="text-xl font-semibold text-foreground">Warehouses</h2>
           </div>
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             {canManage ? 'Manage warehouses and their details' : 'View warehouses (read-only)'}
           </p>
         </Link>
 
         <Link
           href="/settings/locations"
-          className="bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-green-500 transition-colors"
+          className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 hover:border-green-500 transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           <div className="flex items-center gap-3 mb-4">
             <MapPin className="w-6 h-6 text-green-400" />
-            <h2 className="text-xl font-semibold text-white">Locations</h2>
+            <h2 className="text-xl font-semibold text-foreground">Locations</h2>
           </div>
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             {canManage ? 'Manage locations within warehouses' : 'View locations (read-only)'}
           </p>
         </Link>
@@ -88,24 +88,24 @@ export default function SettingsPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <Warehouse className="w-6 h-6 text-blue-400" />
-            <h2 className="text-xl font-semibold text-white">Warehouses</h2>
+            <h2 className="text-xl font-semibold text-foreground">Warehouses</h2>
           </div>
           {loading ? (
-            <div className="text-gray-400">Loading...</div>
+            <div className="text-muted-foreground">Loading...</div>
           ) : (
             <div className="space-y-2">
               {warehouses.map((warehouse) => (
                 <div
                   key={warehouse._id}
-                  className="p-3 bg-gray-800 rounded-lg border border-gray-700"
+                  className="p-3 bg-muted/30 rounded-lg border border-black/10 dark:border-white/10"
                 >
-                  <div className="font-medium text-white">{warehouse.name}</div>
-                  <div className="text-sm text-gray-400">Code: {warehouse.code}</div>
+                  <div className="font-medium text-foreground">{warehouse.name}</div>
+                  <div className="text-sm text-muted-foreground">Code: {warehouse.code}</div>
                   {warehouse.address && (
-                    <div className="text-sm text-gray-500 mt-1">{warehouse.address}</div>
+                    <div className="text-sm text-muted-foreground/70 mt-1">{warehouse.address}</div>
                   )}
                 </div>
               ))}
@@ -113,22 +113,22 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <MapPin className="w-6 h-6 text-green-400" />
-            <h2 className="text-xl font-semibold text-white">Locations</h2>
+            <h2 className="text-xl font-semibold text-foreground">Locations</h2>
           </div>
           {loading ? (
-            <div className="text-gray-400">Loading...</div>
+            <div className="text-muted-foreground">Loading...</div>
           ) : (
             <div className="space-y-2">
               {locations.map((location) => (
                 <div
                   key={location._id}
-                  className="p-3 bg-gray-800 rounded-lg border border-gray-700"
+                  className="p-3 bg-muted/30 rounded-lg border border-black/10 dark:border-white/10"
                 >
-                  <div className="font-medium text-white">{location.name}</div>
-                  <div className="text-sm text-gray-400">
+                  <div className="font-medium text-foreground">{location.name}</div>
+                  <div className="text-sm text-muted-foreground">
                     Warehouse: {location.warehouseId?.name || '-'}
                   </div>
                 </div>

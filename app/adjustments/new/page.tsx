@@ -155,30 +155,30 @@ export default function NewAdjustmentPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/adjustments"
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
-        <h1 className="text-3xl font-bold text-white">New Stock Adjustment</h1>
+        <h1 className="text-3xl font-bold text-foreground">New Stock Adjustment</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         {error && (
-          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+          <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Product *
             </label>
             <select
               required
               value={formData.productId}
               onChange={(e) => setFormData({ ...formData, productId: e.target.value, newQuantity: '' })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select product</option>
               {products.map((product) => (
@@ -190,14 +190,14 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Warehouse *
             </label>
             <select
               required
               value={formData.warehouseId}
               onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value, locationId: '', newQuantity: '' })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select warehouse</option>
               {warehouses.map((wh) => (
@@ -209,13 +209,13 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Location
             </label>
             <select
               value={formData.locationId}
               onChange={(e) => setFormData({ ...formData, locationId: e.target.value, newQuantity: '' })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               disabled={!formData.warehouseId}
             >
               <option value="">No location (warehouse level)</option>
@@ -228,10 +228,10 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Current Stock
             </label>
-            <div className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white">
+            <div className="px-4 py-2 bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground">
               {fetchingStock ? (
                 <Loader2 className="w-4 h-4 animate-spin inline" />
               ) : currentStock !== null ? (
@@ -243,7 +243,7 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               New Quantity *
             </label>
             <input
@@ -252,22 +252,22 @@ export default function NewAdjustmentPage() {
               min="0"
               value={formData.newQuantity}
               onChange={(e) => setFormData({ ...formData, newQuantity: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Enter new quantity"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Difference
             </label>
             <div
-              className={`px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-medium ${
+              className={`px-4 py-2 bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg font-medium ${
                 difference > 0
-                  ? 'text-green-400'
+                  ? 'text-green-500'
                   : difference < 0
-                  ? 'text-red-400'
-                  : 'text-gray-400'
+                  ? 'text-red-500'
+                  : 'text-muted-foreground'
               }`}
             >
               {difference > 0 ? '+' : ''}
@@ -276,14 +276,14 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Reason *
             </label>
             <select
               required
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="COUNT_ERROR">Count Error</option>
               <option value="DAMAGE">Damage</option>
@@ -293,30 +293,30 @@ export default function NewAdjustmentPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Remarks
             </label>
             <input
               type="text"
               value={formData.remarks}
               onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Optional remarks"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-black/10 dark:border-white/10">
           <Link
             href="/adjustments"
-            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-300"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Save className="w-4 h-4" />
             {loading ? 'Creating...' : 'Create Adjustment'}

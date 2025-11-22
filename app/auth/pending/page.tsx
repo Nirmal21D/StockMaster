@@ -27,21 +27,21 @@ export default function PendingApprovalPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-      <div className="max-w-md w-full bg-gray-900 rounded-xl border border-gray-800 p-8 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background px-4">
+      <div className="max-w-md w-full bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-8 text-center shadow-2xl">
         <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
           <Clock className="w-10 h-10 text-yellow-400 animate-pulse" />
         </div>
         
-        <h1 className="text-2xl font-bold text-white mb-2">Account Pending Approval</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Account Pending Approval</h1>
         
-        <p className="text-gray-400 mb-6">
+        <p className="text-muted-foreground mb-6">
           Your account registration is pending approval by an administrator.
         </p>
 
         {email && (
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <div className="flex items-center justify-center gap-2 text-gray-300">
+          <div className="mb-6 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-black/10 dark:border-white/10">
+            <div className="flex items-center justify-center gap-2 text-foreground">
               <Mail className="w-4 h-4" />
               <span className="text-sm">{email}</span>
             </div>
@@ -49,15 +49,15 @@ export default function PendingApprovalPage() {
         )}
 
         <div className="space-y-4">
-          <div className="p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg">
-            <p className="text-blue-400 text-sm">
+          <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg backdrop-blur-sm">
+            <p className="text-primary text-sm">
               ⏳ You will be able to log in once an administrator approves your account.
             </p>
           </div>
 
-          <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <p className="text-gray-400 text-sm mb-2">What happens next?</p>
-            <ul className="text-left text-sm text-gray-500 space-y-1">
+          <div className="p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-black/10 dark:border-white/10">
+            <p className="text-foreground text-sm mb-2">What happens next?</p>
+            <ul className="text-left text-sm text-muted-foreground space-y-1">
               <li>• An administrator will review your registration</li>
               <li>• You'll be assigned a role and warehouse access</li>
               <li>• You'll receive access to the system</li>
@@ -67,14 +67,14 @@ export default function PendingApprovalPage() {
           <div className="flex gap-3">
             <button
               onClick={handleSignOut}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 hover:bg-accent text-foreground rounded-lg transition-colors backdrop-blur-sm"
             >
               <LogOut className="w-4 h-4" />
               Back to Login
             </button>
             <Link
               href="/signup"
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-center"
+              className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors text-center"
             >
               Register Another
             </Link>

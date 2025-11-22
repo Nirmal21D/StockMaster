@@ -1,10 +1,17 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useTheme } from 'next-themes'
 import { ArrowRight, Sparkles } from 'lucide-react'
 
 export function CTASection() {
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/20" />
@@ -47,12 +54,12 @@ export function CTASection() {
               }} />
             </div>
 
-            {/* Floating sparkles */}
+            {/* Floating logos */}
             <motion.div
-              className="absolute top-8 right-8 text-primary/30"
+              className="absolute top-8 right-8 opacity-30"
               animate={{
                 y: [0, -10, 0],
-                rotate: [0, 10, 0],
+                rotate: [0, 5, 0],
               }}
               transition={{
                 duration: 3,
@@ -60,13 +67,18 @@ export function CTASection() {
                 ease: "easeInOut",
               }}
             >
-              <Sparkles className="h-8 w-8" />
+              {mounted && (
+                <img src={theme === 'dark' ? '/app_dark.png' : '/sm.png'} alt="Logo" className="h-12 w-auto" />
+              )}
+              {!mounted && (
+                <img src="/sm.png" alt="Logo" className="h-12 w-auto" />
+              )}
             </motion.div>
             <motion.div
-              className="absolute bottom-8 left-8 text-secondary/30"
+              className="absolute bottom-8 left-8 opacity-30"
               animate={{
                 y: [0, 10, 0],
-                rotate: [0, -10, 0],
+                rotate: [0, -5, 0],
               }}
               transition={{
                 duration: 3,
@@ -75,7 +87,12 @@ export function CTASection() {
                 delay: 1.5,
               }}
             >
-              <Sparkles className="h-6 w-6" />
+              {mounted && (
+                <img src={theme === 'dark' ? '/app_dark.png' : '/sm.png'} alt="Logo" className="h-10 w-auto" />
+              )}
+              {!mounted && (
+                <img src="/sm.png" alt="Logo" className="h-10 w-auto" />
+              )}
             </motion.div>
 
             {/* Content */}
