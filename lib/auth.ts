@@ -20,10 +20,24 @@ export const authOptions: NextAuthOptions = {
 
           await connectDB();
 
-          const user = await User.findOne({ email: credentials.email, isActive: true });
+          const user = await User.findOne({ email: credentials.email });
 
           if (!user) {
             return null;
+          }
+
+          // Reject PENDING users
+          if (user.status === 'PENDING') {
+            const error: any = new Error('Account pending approval by admin');
+            error.status = 'PENDING';
+            throw error;
+          }
+
+          // Reject INACTIVE users
+          if (user.status === 'INACTIVE' || !user.isActive) {
+            const error: any = new Error('Account is inactive');
+            error.status = 'INACTIVE';
+            throw error;
           }
 
           // Check password
@@ -50,6 +64,9 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            status: user.status,
+            assignedWarehouses: user.assignedWarehouses?.map((id) => id.toString()) || [],
+            primaryWarehouseId: user.primaryWarehouseId?.toString() || null,
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -63,6 +80,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
+        token.status = (user as any).status;
+        token.assignedWarehouses = (user as any).assignedWarehouses || [];
+        token.primaryWarehouseId = (user as any).primaryWarehouseId || null;
       }
       return token;
     },
@@ -70,6 +90,9 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
+        (session.user as any).status = token.status;
+        (session.user as any).assignedWarehouses = token.assignedWarehouses || [];
+        (session.user as any).primaryWarehouseId = token.primaryWarehouseId || null;
       }
       return session;
     },

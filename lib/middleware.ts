@@ -12,6 +12,15 @@ export async function requireAuth(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Check if user is active
+  const userStatus = (session.user as any)?.status;
+  if (userStatus !== 'ACTIVE') {
+    return NextResponse.json(
+      { error: 'Account is not active. Please contact administrator.' },
+      { status: 403 }
+    );
+  }
+
   return session;
 }
 

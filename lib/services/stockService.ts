@@ -3,6 +3,90 @@ import StockMovement from '../models/StockMovement';
 import mongoose from 'mongoose';
 
 /**
+ * Increase stock level (for receipts, transfers-in, adjustments with positive difference)
+ */
+export async function increaseStock(
+  productId: mongoose.Types.ObjectId,
+  warehouseId: mongoose.Types.ObjectId,
+  locationId: mongoose.Types.ObjectId | undefined,
+  quantity: number
+) {
+  if (quantity <= 0) {
+    throw new Error('Quantity must be positive for increaseStock');
+  }
+
+  const stockLevel = await StockLevel.findOneAndUpdate(
+    {
+      productId,
+      warehouseId,
+      locationId: locationId || null,
+    },
+    {
+      $inc: { quantity },
+      $set: { updatedAt: new Date() },
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+
+  return stockLevel;
+}
+
+/**
+ * Decrease stock level (for deliveries, transfers-out, adjustments with negative difference)
+ */
+export async function decreaseStock(
+  productId: mongoose.Types.ObjectId,
+  warehouseId: mongoose.Types.ObjectId,
+  locationId: mongoose.Types.ObjectId | undefined,
+  quantity: number
+) {
+  if (quantity <= 0) {
+    throw new Error('Quantity must be positive for decreaseStock');
+  }
+
+  const stockLevel = await StockLevel.findOne({
+    productId,
+    warehouseId,
+    locationId: locationId || null,
+  });
+
+  if (!stockLevel) {
+    throw new Error('Stock level not found');
+  }
+
+  if (stockLevel.quantity < quantity) {
+    throw new Error(
+      `Insufficient stock. Available: ${stockLevel.quantity}, Required: ${quantity}`
+    );
+  }
+
+  stockLevel.quantity -= quantity;
+  stockLevel.updatedAt = new Date();
+  await stockLevel.save();
+
+  return stockLevel;
+}
+
+/**
+ * Get total stock for a product (optionally filtered by warehouse)
+ */
+export async function getTotalStock(
+  productId: mongoose.Types.ObjectId,
+  warehouseId?: mongoose.Types.ObjectId
+): Promise<number> {
+  const query: any = { productId };
+  if (warehouseId) {
+    query.warehouseId = warehouseId;
+  }
+
+  const stockLevels = await StockLevel.find(query);
+  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+}
+
+/**
  * Update stock level and create ledger entry
  * This is the core function that all stock-changing operations should use
  */
@@ -29,6 +113,7 @@ export async function updateStock(
     },
     {
       $inc: { quantity: quantityChange },
+      $set: { updatedAt: new Date() },
     },
     {
       upsert: true,

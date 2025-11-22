@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
 import { TopBar } from '@/components/TopBar';
 
-export default async function LocationsLayout({
+export default async function AdminUsersLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -17,12 +17,14 @@ export default async function LocationsLayout({
 
   const userRole = (session.user as any)?.role;
   if (userRole !== 'ADMIN') {
-    redirect('/settings');
+    redirect('/dashboard');
   }
 
   return (
     <div className="flex min-h-screen bg-gray-950">
+      <Sidebar />
       <div className="flex-1 flex flex-col">
+        <TopBar />
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
     </div>
