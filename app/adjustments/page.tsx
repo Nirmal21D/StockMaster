@@ -1,0 +1,170 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Plus, Eye, Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
+interface Adjustment {
+  _id: string;
+  adjustmentNumber: string;
+  productId: any;
+  warehouseId: any;
+  locationId?: any;
+  oldQuantity: number;
+  newQuantity: number;
+  difference: number;
+  reason: string;
+  remarks?: string;
+  createdAt: string;
+  createdBy: any;
+}
+
+export default function AdjustmentsPage() {
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAdjustments();
+  }, []);
+
+  const fetchAdjustments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/adjustments');
+      const data = await res.json();
+      setAdjustments(data || []);
+    } catch (error) {
+      console.error('Failed to fetch adjustments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getReasonColor = (reason: string) => {
+    switch (reason) {
+      case 'DAMAGE':
+        return 'bg-red-500/20 text-red-400 border-red-500/50';
+      case 'LOSS':
+        return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
+      case 'COUNT_ERROR':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Stock Adjustments</h1>
+        <Link
+          href="/adjustments/new"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          New Adjustment
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      ) : (
+        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Reference
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Warehouse
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Old Qty
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  New Qty
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Difference
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Reason
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {adjustments.map((adjustment) => (
+                <tr key={adjustment._id} className="hover:bg-gray-800/50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                    {adjustment.adjustmentNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    [{adjustment.productId?.sku}] {adjustment.productId?.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {adjustment.warehouseId?.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    {adjustment.oldQuantity}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    {adjustment.newQuantity}
+                  </td>
+                  <td
+                    className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                      adjustment.difference > 0
+                        ? 'text-green-400'
+                        : adjustment.difference < 0
+                        ? 'text-red-400'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    {adjustment.difference > 0 ? '+' : ''}
+                    {adjustment.difference}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full border ${getReasonColor(
+                        adjustment.reason
+                      )}`}
+                    >
+                      {adjustment.reason}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    {formatDate(adjustment.createdAt)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link
+                      href={`/adjustments/${adjustment._id}`}
+                      className="text-blue-400 hover:text-blue-300"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {adjustments.length === 0 && (
+            <div className="text-center py-12 text-gray-400">No adjustments found</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
