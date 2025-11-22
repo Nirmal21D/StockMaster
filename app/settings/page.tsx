@@ -69,10 +69,10 @@ export default function SettingsPage() {
 
         <Link
           href="/settings/locations"
-          className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 hover:border-green-500 transition-all duration-300 shadow-lg hover:shadow-xl"
+          className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           <div className="flex items-center gap-3 mb-4">
-            <MapPin className="w-6 h-6 text-green-400" />
+            <MapPin className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold text-foreground">Locations</h2>
           </div>
           <p className="text-muted-foreground">
@@ -82,7 +82,7 @@ export default function SettingsPage() {
       </div>
 
       {!canManage && (
-        <div className="p-4 bg-yellow-500/20 border border-yellow-500 rounded-lg text-yellow-400">
+        <div className="p-4 bg-muted/50 border border-muted-foreground/50 rounded-lg text-muted-foreground">
           You are viewing settings in read-only mode. Only administrators can create, edit, or delete warehouses and locations.
         </div>
       )}
@@ -90,7 +90,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
-            <Warehouse className="w-6 h-6 text-blue-400" />
+            <Warehouse className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold text-foreground">Warehouses</h2>
           </div>
           {loading ? (
@@ -115,7 +115,7 @@ export default function SettingsPage() {
 
         <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
-            <MapPin className="w-6 h-6 text-green-400" />
+            <MapPin className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold text-foreground">Locations</h2>
           </div>
           {loading ? (

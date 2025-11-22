@@ -21,6 +21,7 @@ export default function EditProductPage() {
     unit: 'pcs',
     price: '',
     reorderLevel: '0',
+    quantity: '',
     abcClass: '',
     description: '',
     isActive: true,
@@ -59,6 +60,7 @@ export default function EditProductPage() {
         unit: product.unit || 'pcs',
         price: product.price?.toString() || '',
         reorderLevel: product.reorderLevel?.toString() || '0',
+        quantity: product.quantity?.toString() || '',
         abcClass: product.abcClass || '',
         description: product.description || '',
         isActive: product.isActive !== undefined ? product.isActive : true,
@@ -83,6 +85,7 @@ export default function EditProductPage() {
           ...formData,
           price: formData.price ? parseFloat(formData.price) : undefined,
           reorderLevel: parseInt(formData.reorderLevel) || 0,
+          quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
           abcClass: formData.abcClass || undefined,
           description: formData.description || undefined,
           isActive: formData.isActive,
@@ -213,6 +216,19 @@ export default function EditProductPage() {
               value={formData.reorderLevel}
               onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
               className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Edit Quantity
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Enter new quantity..."
             />
           </div>
 

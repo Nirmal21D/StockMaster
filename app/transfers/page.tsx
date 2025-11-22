@@ -156,17 +156,17 @@ export default function TransfersPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/50';
       case 'IN_TRANSIT':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
       case 'DRAFT':
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
       case 'READY':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+        return 'bg-primary/20 text-primary border-primary/50';
       case 'WAITING':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
     }
   };
 
@@ -231,7 +231,7 @@ export default function TransfersPage() {
         {canCreate && (
           <Link
             href="/transfers/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
             New Transfer
@@ -241,13 +241,13 @@ export default function TransfersPage() {
 
       {/* Tabs for Operators */}
       {userRole === 'OPERATOR' && (
-        <div className="flex gap-2 border-b border-gray-800">
+        <div className="flex gap-2 border-b border-black/10 dark:border-white/10">
           <button
             onClick={() => setViewType('transfers')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'transfers'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All Transfers ({transfers.length})
@@ -256,8 +256,8 @@ export default function TransfersPage() {
             onClick={() => setViewType('pending-transfers')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'pending-transfers'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Pending Transfers ({pendingTransfersCount})
@@ -266,8 +266,8 @@ export default function TransfersPage() {
             onClick={() => setViewType('pending')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'pending'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Pending Deliveries ({pendingDeliveries.length})
@@ -276,8 +276,8 @@ export default function TransfersPage() {
             onClick={() => setViewType('approved')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'approved'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Approved Deliveries ({approvedDeliveries.length})
@@ -291,40 +291,40 @@ export default function TransfersPage() {
         <>
           {/* Transfers Table */}
           {viewType === 'transfers' && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
               <table className="w-full">
-                <thead className="bg-gray-800">
+                <thead className="bg-muted/30">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Reference
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       From
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       To
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800">
+                <tbody className="divide-y divide-black/10 dark:divide-white/10">
                   {transfers.map((transfer) => (
-                    <tr key={transfer._id} className="hover:bg-gray-800/50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                    <tr key={transfer._id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                         {transfer.transferNumber}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {transfer.sourceWarehouseId?.name || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {transfer.targetWarehouseId?.name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -336,7 +336,7 @@ export default function TransfersPage() {
                           {transfer.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(transfer.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -354,7 +354,7 @@ export default function TransfersPage() {
                            })() && (
                             <button
                               onClick={() => handleAcceptTransfer(transfer._id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg transition-all duration-200"
                               title="Mark as Received"
                             >
                               <CheckCircle className="w-3 h-3" />
@@ -363,7 +363,7 @@ export default function TransfersPage() {
                           )}
                           <Link
                             href={`/transfers/${transfer._id}`}
-                            className="text-blue-400 hover:text-blue-300"
+                            className="text-primary hover:text-primary/80 transition-colors"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
@@ -375,16 +375,16 @@ export default function TransfersPage() {
                 </tbody>
               </table>
               {transfers.length === 0 && (
-                <div className="text-center py-12 text-gray-400">No transfers found</div>
+                <div className="text-center py-12 text-muted-foreground">No transfers found</div>
               )}
             </div>
           )}
 
           {/* Pending Deliveries Table */}
           {viewType === 'pending' && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
               <table className="w-full">
-                <thead className="bg-gray-800">
+                <thead className="bg-muted/30">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Delivery Number
@@ -412,10 +412,10 @@ export default function TransfersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                         {delivery.deliveryNumber}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {delivery.targetWarehouseId?.name || '-'} ({delivery.targetWarehouseId?.code || ''})
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {delivery.lines?.length || 0} items
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -427,13 +427,13 @@ export default function TransfersPage() {
                           {delivery.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(delivery.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link
                           href={`/deliveries/${delivery._id}`}
-                          className="text-blue-400 hover:text-blue-300 mr-3"
+                          className="text-primary hover:text-primary/80 transition-colors mr-3"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
@@ -443,16 +443,16 @@ export default function TransfersPage() {
                 </tbody>
               </table>
               {pendingDeliveries.length === 0 && (
-                <div className="text-center py-12 text-gray-400">No pending deliveries waiting for approval</div>
+                <div className="text-center py-12 text-muted-foreground">No pending deliveries waiting for approval</div>
               )}
             </div>
           )}
 
           {/* Pending Transfers Table */}
           {viewType === 'pending-transfers' && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
               <table className="w-full">
-                <thead className="bg-gray-800">
+                <thead className="bg-muted/30">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Reference
@@ -503,14 +503,14 @@ export default function TransfersPage() {
                       return false;
                     })
                     .map((transfer) => (
-                      <tr key={transfer._id} className="hover:bg-gray-800/50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                      <tr key={transfer._id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                           {transfer.transferNumber}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {transfer.sourceWarehouseId?.name || '-'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {transfer.targetWarehouseId?.name || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -522,16 +522,16 @@ export default function TransfersPage() {
                             {transfer.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {transfer.status === 'DRAFT' ? (
-                            <span className="text-yellow-400">Dispatch Required</span>
+                            <span className="text-muted-foreground">Dispatch Required</span>
                           ) : transfer.status === 'IN_TRANSIT' ? (
-                            <span className="text-blue-400">Receive Required</span>
+                            <span className="text-primary">Receive Required</span>
                           ) : (
                             '-'
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {formatDate(transfer.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -547,7 +547,7 @@ export default function TransfersPage() {
                               return canDispatch ? (
                                 <button
                                   onClick={() => handleDispatchTransfer(transfer._id)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg transition-all duration-200"
                                   title="Dispatch Transfer"
                                 >
                                   <Truck className="w-3 h-3" />
@@ -566,7 +566,7 @@ export default function TransfersPage() {
                               return canReceive ? (
                                 <button
                                   onClick={() => handleAcceptTransfer(transfer._id)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg transition-all duration-200"
                                   title="Mark as Received"
                                 >
                                   <CheckCircle className="w-3 h-3" />
@@ -576,7 +576,7 @@ export default function TransfersPage() {
                             })()}
                             <Link
                               href={`/transfers/${transfer._id}`}
-                              className="text-blue-400 hover:text-blue-300"
+                              className="text-primary hover:text-primary/80 transition-colors"
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
@@ -613,7 +613,7 @@ export default function TransfersPage() {
 
           {/* Approved Deliveries Table */}
           {viewType === 'approved' && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
               <table className="w-full">
                 <thead className="bg-gray-800">
                   <tr>
@@ -664,14 +664,14 @@ export default function TransfersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link
                           href={`/transfers/new?deliveryId=${delivery._id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors mr-2"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg transition-all duration-200 mr-2"
                         >
                           <Package className="w-3 h-3" />
                           Create Transfer
                         </Link>
                         <Link
                           href={`/deliveries/${delivery._id}`}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-primary hover:text-primary/80 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>

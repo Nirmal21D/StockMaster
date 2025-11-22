@@ -92,24 +92,24 @@ export default function RequisitionsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/30';
       case 'REJECTED':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       case 'SUBMITTED':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Requisitions</h1>
+        <h1 className="text-3xl font-bold text-foreground">Requisitions</h1>
         {canCreate && (
           <Link
             href="/requisitions/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200"
           >
             <Plus className="w-5 h-5" />
             New Requisition
@@ -119,13 +119,13 @@ export default function RequisitionsPage() {
 
       {/* Tabs for Managers */}
       {userRole === 'MANAGER' && (
-        <div className="flex gap-2 border-b border-gray-800">
+        <div className="flex gap-2 border-b border-border">
           <button
             onClick={() => setViewType('all')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'all'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All
@@ -134,8 +134,8 @@ export default function RequisitionsPage() {
             onClick={() => setViewType('sent')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'sent'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Sent ({allRequisitions.filter((req) => {
@@ -147,8 +147,8 @@ export default function RequisitionsPage() {
             onClick={() => setViewType('received')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'received'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Received ({allRequisitions.filter((req) => {
@@ -174,24 +174,24 @@ export default function RequisitionsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reference
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Requesting Warehouse
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {requisitions.map((req) => (
-                <tr key={req._id} className="hover:bg-gray-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                <tr key={req._id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     <div className="flex items-center gap-2">
                       {req.requisitionNumber}
                       {(req.status === 'APPROVED' || req.status === 'REJECTED') && (

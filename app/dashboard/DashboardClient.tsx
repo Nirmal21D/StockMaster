@@ -179,7 +179,7 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
           title="Slow/Dead Stock"
           value={data.slowDeadStockCount}
           icon={<Clock className="w-6 h-6" />}
-          href="/analytics/slow-stock"
+          href="/products"
           description="No movement in 90+ days"
           trend={{ value: data.slowDeadStockCount, label: 'Total items' }}
         />

@@ -258,13 +258,13 @@ export default function RequisitionDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/30';
       case 'REJECTED':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       case 'SUBMITTED':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
@@ -320,7 +320,7 @@ export default function RequisitionDetailPage() {
           {canApprove && (
             <button
               onClick={() => setShowApproveDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               Approve
@@ -329,7 +329,7 @@ export default function RequisitionDetailPage() {
           {canReject && (
             <button
               onClick={() => setShowRejectDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <XCircle className="w-4 h-4" />
               Reject
@@ -339,7 +339,7 @@ export default function RequisitionDetailPage() {
             delivery ? (
               <Link
                 href={`/deliveries/${delivery._id}`}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200"
               >
                 <FileText className="w-4 h-4" />
                 View Delivery ({delivery.deliveryNumber})
@@ -347,13 +347,13 @@ export default function RequisitionDetailPage() {
             ) : deliveryNotFound ? (
               <Link
                 href={`/deliveries/new?requisitionId=${requisitionId}`}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Create Delivery
               </Link>
             ) : (
-              <div className="text-sm text-gray-400 px-4 py-2">
+              <div className="text-sm text-muted-foreground px-4 py-2">
                 Checking for delivery...
               </div>
             )
@@ -491,7 +491,7 @@ export default function RequisitionDetailPage() {
                 {loadingSuggestions ? (
                   <div className="text-gray-400 text-sm py-2">Loading suggestions...</div>
                 ) : bestSourceSuggestions.length > 0 ? (
-                  <div className="mb-2 p-2 bg-blue-500/20 border border-blue-500/50 rounded text-sm text-blue-300">
+                  <div className="mb-2 p-2 bg-primary/10 border border-primary/30 rounded text-sm text-primary">
                     💡 Suggested: {bestSourceSuggestions[0]?.warehouseName} ({bestSourceSuggestions[0]?.warehouseCode}) - {bestSourceSuggestions[0]?.totalQuantity} units available
                   </div>
                 ) : null}
@@ -543,7 +543,7 @@ export default function RequisitionDetailPage() {
                 <button
                   onClick={() => handleSubmit('approve')}
                   disabled={processing || !finalSourceWarehouse}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg"
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-200"
                 >
                   {processing ? 'Approving...' : 'Approve'}
                 </button>

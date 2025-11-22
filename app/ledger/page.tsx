@@ -42,15 +42,15 @@ export default function LedgerPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'RECEIPT':
-        return 'text-green-400';
+        return 'text-primary';
       case 'DELIVERY':
-        return 'text-red-400';
+        return 'text-destructive';
       case 'TRANSFER':
-        return 'text-blue-400';
+        return 'text-primary';
       case 'ADJUSTMENT':
-        return 'text-yellow-400';
+        return 'text-muted-foreground';
       default:
-        return 'text-gray-400';
+        return 'text-muted-foreground';
     }
   };
 
@@ -81,22 +81,22 @@ export default function LedgerPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   From
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   To
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Quantity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   User
                 </th>
               </tr>
@@ -106,8 +106,8 @@ export default function LedgerPage() {
                 <tr
                   key={movement._id}
                   className={`hover:bg-muted/30 transition-colors duration-200 ${
-                    movement.type === 'RECEIPT' ? 'bg-green-500/5' : ''
-                  } ${movement.type === 'DELIVERY' ? 'bg-red-500/5' : ''}`}
+                    movement.type === 'RECEIPT' ? 'bg-primary/5' : ''
+                  } ${movement.type === 'DELIVERY' ? 'bg-destructive/5' : ''}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(movement.createdAt)}

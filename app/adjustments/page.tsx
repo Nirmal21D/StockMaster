@@ -45,13 +45,13 @@ export default function AdjustmentsPage() {
   const getReasonColor = (reason: string) => {
     switch (reason) {
       case 'DAMAGE':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/50';
       case 'LOSS':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/50';
       case 'COUNT_ERROR':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
     }
   };
 
@@ -80,28 +80,28 @@ export default function AdjustmentsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reference
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Warehouse
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Old Qty
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   New Qty
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Difference
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reason
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -127,10 +127,10 @@ export default function AdjustmentsPage() {
                   <td
                     className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                       adjustment.difference > 0
-                        ? 'text-green-400'
+                        ? 'text-primary'
                         : adjustment.difference < 0
-                        ? 'text-red-400'
-                        : 'text-gray-400'
+                        ? 'text-destructive'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {adjustment.difference > 0 ? '+' : ''}

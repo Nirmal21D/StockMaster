@@ -62,14 +62,18 @@ export function TopBar() {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2">
             {mounted && (
-              <img 
-                src={theme === 'dark' ? '/app_dark.png' : '/sm.png'} 
-                alt="StockMaster" 
-                className="h-8 lg:h-10 w-auto" 
+              <img
+                src={theme === 'dark' ? '/app_dark.png' : '/sm.png'}
+                alt="StockMaster"
+                className={
+                  theme === 'dark'
+                    ? 'h-8 lg:h-10 w-auto'
+                    : 'h-8 lg:h-10 w-auto drop-shadow-[0_1px_6px_rgba(0,0,0,0.18)]'
+                }
               />
             )}
             {!mounted && (
-              <img src="/sm.png" alt="StockMaster" className="h-8 lg:h-10 w-auto" />
+              <img src="/sm.png" alt="StockMaster" className="h-8 lg:h-10 w-auto drop-shadow-[0_1px_6px_rgba(0,0,0,0.18)]" />
             )}
           </Link>
 

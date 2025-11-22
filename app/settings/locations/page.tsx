@@ -135,7 +135,7 @@ export default function LocationsPage() {
       </div>
 
       {!canManage && (
-        <div className="p-4 bg-yellow-500/20 border border-yellow-500 rounded-lg text-yellow-400">
+        <div className="p-4 bg-muted/50 border border-muted-foreground/50 rounded-lg text-muted-foreground">
           You don't have permission to manage locations. Only administrators can create, edit, or delete locations.
         </div>
       )}
