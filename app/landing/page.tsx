@@ -8,6 +8,7 @@ import { FeaturesSection } from '@/components/landing/FeaturesSection'
 import { ProcessFlowSection } from '@/components/landing/ProcessFlowSection'
 import { CTASection } from '@/components/landing/CTASection'
 import { Footer } from '@/components/landing/Footer'
+import { SmoothCursor } from '@/components/ui/smooth-cursor'
 import { Home, Smartphone, Sparkles, GitBranch } from 'lucide-react'
 
 export default function LandingPage() {
@@ -15,12 +16,33 @@ export default function LandingPage() {
   const searchParams = useSearchParams()
   const hasRedirected = useRef(false)
   const [showContent, setShowContent] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   // Create refs for smooth scrolling to sections
   const sectionRefs = {
     features: useRef<HTMLElement>(null),
     'how-it-works': useRef<HTMLElement>(null),
   }
+
+  // Check if desktop on mount with debounce
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+    checkDesktop()
+    
+    let timeoutId: NodeJS.Timeout
+    const debouncedCheck = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(checkDesktop, 150)
+    }
+    
+    window.addEventListener('resize', debouncedCheck, { passive: true })
+    return () => {
+      window.removeEventListener('resize', debouncedCheck)
+      clearTimeout(timeoutId)
+    }
+  }, [])
 
   // Redirect all visitors to the welcome page on every visit
   useEffect(() => {
@@ -61,9 +83,16 @@ export default function LandingPage() {
         .fade-in {
           animation: fadeIn 0.5s ease-out;
         }
+        ${isDesktop ? `
+          * {
+            cursor: none !important;
+          }
+        ` : ''}
       `}</style>
       
       <div className="min-h-screen bg-background fade-in">
+        {isDesktop && <SmoothCursor />}
+        
         <FloatingNav
           navItems={[
             { name: 'Home', link: '/landing', icon: <Home className="h-4 w-4" /> },

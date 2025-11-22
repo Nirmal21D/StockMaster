@@ -1,11 +1,22 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { SmoothCursor } from '@/components/ui/smooth-cursor'
 
 export default function WelcomePage() {
   const router = useRouter()
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+    checkDesktop()
+    window.addEventListener('resize', checkDesktop)
+    return () => window.removeEventListener('resize', checkDesktop)
+  }, [])
 
   useEffect(() => {
     // Preload the landing page for smoother transition
@@ -25,7 +36,14 @@ export default function WelcomePage() {
         body {
           overflow: hidden;
         }
+        ${isDesktop ? `
+          * {
+            cursor: none !important;
+          }
+        ` : ''}
       `}</style>
+      
+      {isDesktop && <SmoothCursor />}
       
       {/* Optimized splash screen animation - Single framer-motion sequence */}
       <motion.div 
