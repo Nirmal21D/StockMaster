@@ -19,7 +19,12 @@ export async function GET(request: NextRequest) {
 
     const query: any = {};
 
-    if (warehouseId) {
+    // For Operators, filter by assigned warehouses
+    const userRole = (session.user as any)?.role;
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      query.warehouseId = { $in: assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id)) };
+    } else if (warehouseId) {
       query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
     }
 
@@ -53,6 +58,16 @@ export async function POST(request: NextRequest) {
 
     if (!productId || !warehouseId || newQuantity === undefined || !reason) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // For Operators, verify they have access to this warehouse
+    const userRole = (session.user as any)?.role;
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && !assignedWarehouses.includes(warehouseId)) {
+      return NextResponse.json(
+        { error: 'You do not have access to this warehouse' },
+        { status: 403 }
+      );
     }
 
     // Get current stock level

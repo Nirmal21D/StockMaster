@@ -17,8 +17,11 @@ export async function GET(
 
     const delivery = await Delivery.findById(params.id)
       .populate('warehouseId', 'name code')
+      .populate({ path: 'targetWarehouseId', select: 'name code', strictPopulate: false })
+      .populate({ path: 'requisitionId', select: 'requisitionNumber', strictPopulate: false })
       .populate('createdBy', 'name email')
       .populate('validatedBy', 'name email')
+      .populate('acceptedBy', 'name email')
       .populate('lines.productId', 'name sku unit')
       .populate('lines.fromLocationId', 'name code');
 
@@ -77,19 +80,159 @@ export async function POST(
     if (session instanceof NextResponse) return session;
 
     const userRole = (session.user as any)?.role;
-    if (!['ADMIN', 'OPERATOR'].includes(userRole)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const body = await request.json();
+    const action = body.action || 'validate'; // 'validate', 'approve', or 'reject'
 
     await connectDB();
 
-    const delivery = await Delivery.findById(params.id);
+    const delivery = await Delivery.findById(params.id)
+      .populate({ path: 'targetWarehouseId', select: '_id', strictPopulate: false });
     if (!delivery) {
       return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
     }
 
+    const userId = new mongoose.Types.ObjectId((session.user as any).id);
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    const primaryWarehouseId = (session.user as any)?.primaryWarehouseId;
+
+    // Handle approval by Manager at target warehouse
+    if (action === 'approve') {
+      if (userRole !== 'MANAGER') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      if (delivery.status !== 'WAITING') {
+        return NextResponse.json(
+          { error: 'Can only approve deliveries in WAITING status' },
+          { status: 400 }
+        );
+      }
+
+      // Verify the manager is from the target warehouse (targetWarehouseId)
+      if (!delivery.targetWarehouseId) {
+        return NextResponse.json(
+          { error: 'Delivery does not have a target warehouse' },
+          { status: 400 }
+        );
+      }
+
+      // Handle both populated and unpopulated targetWarehouseId
+      const targetWarehouseId = (delivery.targetWarehouseId as any)?._id || delivery.targetWarehouseId;
+      const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+      const managerWarehouseIds = primaryWarehouseId 
+        ? [primaryWarehouseId, ...assignedWarehouses]
+        : assignedWarehouses;
+      
+      const hasAccess = managerWarehouseIds.some((whId: any) => {
+        const whIdStr = whId?.toString ? whId.toString() : String(whId);
+        return whIdStr === targetWarehouseIdStr;
+      });
+      
+      if (!hasAccess) {
+          return NextResponse.json(
+          { error: 'You can only approve deliveries for your assigned warehouse' },
+            { status: 403 }
+          );
+      }
+
+      // Update delivery status to READY
+      delivery.status = 'READY';
+      delivery.acceptedBy = userId;
+      delivery.acceptedAt = new Date();
+      await delivery.save();
+
+      const populated = await Delivery.findById(delivery._id)
+        .populate('warehouseId', 'name code')
+        .populate({ path: 'targetWarehouseId', select: 'name code', strictPopulate: false })
+        .populate({ path: 'requisitionId', select: 'requisitionNumber', strictPopulate: false })
+        .populate('createdBy', 'name email')
+        .populate('acceptedBy', 'name email')
+        .populate('lines.productId', 'name sku')
+        .populate('lines.fromLocationId', 'name code');
+
+      return NextResponse.json(populated);
+    }
+
+    // Handle rejection by Manager at target warehouse
+    if (action === 'reject') {
+      if (userRole !== 'MANAGER') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      if (delivery.status !== 'WAITING') {
+        return NextResponse.json(
+          { error: 'Can only reject deliveries in WAITING status' },
+          { status: 400 }
+        );
+      }
+
+      // Verify the manager is from the target warehouse (targetWarehouseId)
+      if (!delivery.targetWarehouseId) {
+        return NextResponse.json(
+          { error: 'Delivery does not have a target warehouse' },
+          { status: 400 }
+        );
+      }
+
+      // Handle both populated and unpopulated targetWarehouseId
+      const targetWarehouseId = (delivery.targetWarehouseId as any)?._id || delivery.targetWarehouseId;
+      const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+      const managerWarehouseIds = primaryWarehouseId 
+        ? [primaryWarehouseId, ...assignedWarehouses]
+        : assignedWarehouses;
+      
+      const hasAccess = managerWarehouseIds.some((whId: any) => {
+        const whIdStr = whId?.toString ? whId.toString() : String(whId);
+        return whIdStr === targetWarehouseIdStr;
+      });
+      
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'You can only reject deliveries for your assigned warehouse' },
+          { status: 403 }
+        );
+      }
+
+      const rejectReason = body.reason || 'Rejected by manager';
+      delivery.status = 'REJECTED';
+      delivery.notes = delivery.notes ? `${delivery.notes}\nRejected: ${rejectReason}` : `Rejected: ${rejectReason}`;
+      await delivery.save();
+
+      const populated = await Delivery.findById(delivery._id)
+        .populate('warehouseId', 'name code')
+        .populate({ path: 'targetWarehouseId', select: 'name code', strictPopulate: false })
+        .populate({ path: 'requisitionId', select: 'requisitionNumber', strictPopulate: false })
+        .populate('createdBy', 'name email')
+        .populate('acceptedBy', 'name email')
+        .populate('lines.productId', 'name sku')
+        .populate('lines.fromLocationId', 'name code');
+
+      return NextResponse.json(populated);
+    }
+
+    // Handle validation by Operator (existing flow)
+    if (!['ADMIN', 'OPERATOR'].includes(userRole)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (delivery.status === 'DONE') {
       return NextResponse.json({ error: 'Delivery already validated' }, { status: 400 });
+    }
+
+    // Only validate if status is READY (accepted by manager) or DRAFT (manual delivery)
+    if (delivery.status !== 'READY' && delivery.status !== 'DRAFT') {
+      return NextResponse.json(
+        { error: 'Delivery must be in READY or DRAFT status to validate' },
+        { status: 400 }
+      );
+    }
+
+    // For requisition-based deliveries, stock should be handled via Transfer, not validation
+    if (delivery.requisitionId) {
+      return NextResponse.json(
+        { error: 'Requisition-based deliveries cannot be validated. Please create a Transfer instead.' },
+        { status: 400 }
+      );
     }
 
     // Check stock availability for each line
@@ -122,8 +265,6 @@ export async function POST(
     }
 
     // Update stock for each line (decrement)
-    const userId = new mongoose.Types.ObjectId((session.user as any).id);
-
     for (const line of delivery.lines) {
       await updateStock(
         line.productId,
@@ -132,7 +273,7 @@ export async function POST(
         -line.quantity,
         'DELIVERY',
         'DELIVERY',
-        delivery._id,
+        new mongoose.Types.ObjectId(delivery._id),
         userId,
         delivery.warehouseId,
         line.fromLocationId
@@ -147,8 +288,11 @@ export async function POST(
 
     const populated = await Delivery.findById(delivery._id)
       .populate('warehouseId', 'name code')
+      .populate({ path: 'targetWarehouseId', select: 'name code', strictPopulate: false })
+      .populate({ path: 'requisitionId', select: 'requisitionNumber', strictPopulate: false })
       .populate('createdBy', 'name email')
       .populate('validatedBy', 'name email')
+      .populate('acceptedBy', 'name email')
       .populate('lines.productId', 'name sku')
       .populate('lines.fromLocationId', 'name code');
 

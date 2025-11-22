@@ -12,17 +12,21 @@ export interface IDelivery extends Document {
   customerName?: string;
   deliveryAddress?: string;
   warehouseId: mongoose.Types.ObjectId;
-  status: 'DRAFT' | 'WAITING' | 'READY' | 'DONE';
+  targetWarehouseId?: mongoose.Types.ObjectId; // For requisition-based deliveries
+  requisitionId?: mongoose.Types.ObjectId; // Link to requisition
+  status: 'DRAFT' | 'WAITING' | 'READY' | 'DONE' | 'REJECTED';
   reference?: string;
   notes?: string;
   lines: IDeliveryLine[];
   createdBy: mongoose.Types.ObjectId;
   validatedBy?: mongoose.Types.ObjectId;
+  acceptedBy?: mongoose.Types.ObjectId; // Manager who accepted the delivery
   scheduleDate?: Date;
   responsible?: string;
   createdAt: Date;
   updatedAt: Date;
   validatedAt?: Date;
+  acceptedAt?: Date;
 }
 
 const DeliveryLineSchema = new Schema<IDeliveryLine>(
@@ -51,9 +55,17 @@ const DeliverySchema = new Schema<IDelivery>(
       ref: 'Warehouse',
       required: true,
     },
+    targetWarehouseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Warehouse',
+    },
+    requisitionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Requisition',
+    },
     status: {
       type: String,
-      enum: ['DRAFT', 'WAITING', 'READY', 'DONE'],
+      enum: ['DRAFT', 'WAITING', 'READY', 'DONE', 'REJECTED'],
       default: 'DRAFT',
     },
     reference: { type: String },
@@ -68,9 +80,14 @@ const DeliverySchema = new Schema<IDelivery>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    acceptedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     scheduleDate: { type: Date },
     responsible: { type: String },
     validatedAt: { type: Date },
+    acceptedAt: { type: Date },
   },
   {
     timestamps: true,
@@ -78,6 +95,8 @@ const DeliverySchema = new Schema<IDelivery>(
 );
 
 DeliverySchema.index({ warehouseId: 1 });
+DeliverySchema.index({ targetWarehouseId: 1 });
+DeliverySchema.index({ requisitionId: 1 });
 DeliverySchema.index({ status: 1 });
 DeliverySchema.index({ createdAt: -1 });
 

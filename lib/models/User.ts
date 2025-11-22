@@ -12,6 +12,8 @@ export interface IUser extends Document {
   assignedWarehouses: mongoose.Types.ObjectId[];
   primaryWarehouseId?: mongoose.Types.ObjectId | null;
   isActive: boolean; // Legacy field, kept for backward compatibility
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,7 +21,7 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
     emailVerified: { type: Date, default: null },
     image: { type: String, default: null },
     password: { type: String },
@@ -45,6 +47,8 @@ const UserSchema = new Schema<IUser>(
       default: null,
     },
     isActive: { type: Boolean, default: true },
+    resetToken: { type: String, default: undefined },
+    resetTokenExpiry: { type: Date, default: undefined },
   },
   {
     timestamps: true,

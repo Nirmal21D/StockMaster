@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus, Search, Eye, CheckCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 
 interface Receipt {
   _id: string;
@@ -18,12 +19,25 @@ interface Receipt {
 
 export default function ReceiptsPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showImportSuccess, setShowImportSuccess] = useState(false);
 
   const userRole = (session?.user as any)?.role;
   const canCreate = ['ADMIN', 'OPERATOR'].includes(userRole);
+
+  // Check for import success message
+  useEffect(() => {
+    const importSuccess = searchParams?.get('import_success');
+    
+    if (importSuccess === 'true') {
+      setShowImportSuccess(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowImportSuccess(false), 5000);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchReceipts();
@@ -32,7 +46,9 @@ export default function ReceiptsPage() {
   const fetchReceipts = async () => {
     setLoading(true);
     try {
-      const url = search ? `/api/receipts?search=${encodeURIComponent(search)}` : '/api/receipts';
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const url = `/api/receipts${params.toString() ? '?' + params.toString() : ''}`;
       const res = await fetch(url);
       const data = await res.json();
       setReceipts(Array.isArray(data) ? data : []);
@@ -56,33 +72,30 @@ export default function ReceiptsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Action Bar */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/10 dark:border-white/10">
-        <div className="flex items-center gap-4">
-          {canCreate && (
-            <Link
-              href="/receipts/new"
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="w-5 h-5" />
-              NEW
-            </Link>
-          )}
-          <h1 className="text-2xl font-bold text-foreground">Receipts</h1>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 w-64 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Receipts</h1>
+        {canCreate && (
+          <Link
+            href="/receipts/new"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            New Receipt
+          </Link>
+        )}
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search receipts by reference or supplier..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       </div>
 
@@ -95,7 +108,7 @@ export default function ReceiptsPage() {
             <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium  text-gray-400 uppercase tracking-wider">
                   Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -118,10 +131,10 @@ export default function ReceiptsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/5 dark:divide-white/5">
-              {receipts.map((receipt) => (
-                <tr key={receipt._id} className="hover:bg-muted/30 transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+            <tbody className="divide-y divide-gray-800">
+              {Array.isArray(receipts) && receipts.map((receipt) => (
+                <tr key={receipt._id} className="hover:bg-gray-800/50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                     {receipt.receiptNumber}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
@@ -157,12 +170,12 @@ export default function ReceiptsPage() {
               ))}
             </tbody>
           </table>
-            {receipts.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">No receipts found</div>
-            )}
-          </div>
-        )}
-      </div>
+          {(!Array.isArray(receipts) || receipts.length === 0) && (
+            <div className="text-center py-12 text-gray-400">No receipts found</div>
+          )}
+        </div>
+      )}
+    </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserPlus, Mail, Lock, User, Shield, ArrowLeft } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Shield } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'OPERATOR',
+    note: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export default function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role,
+          note: formData.note,
         }),
       });
 
@@ -66,14 +66,14 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background px-4">
-        <div className="max-w-md w-full bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-8 text-center shadow-2xl">
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+        <div className="max-w-md w-full bg-gray-900 rounded-xl border border-gray-800 p-8 text-center">
           <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <UserPlus className="w-8 h-8 text-green-500" />
+            <UserPlus className="w-8 h-8 text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Registration Successful!</h1>
-          <p className="text-muted-foreground mb-4">
-            Your account with <strong>{formData.role}</strong> role is pending approval by an administrator. 
+          <h1 className="text-2xl font-bold text-white mb-2">Registration Successful!</h1>
+          <p className="text-gray-400 mb-4">
+            Your account is pending approval by an administrator. 
             You will be redirected to the login page shortly.
           </p>
         </div>
@@ -82,148 +82,124 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background px-4 py-8 flex items-center justify-center">
-      {/* Forms Container - Centered */}
-      <div className="max-w-xl mx-auto w-full">
-        {/* Back Button */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 mb-4 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Back to Home</span>
-        </Link>
-        
-        {/* Signup Form - Active */}
-        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-primary/20 dark:border-primary/20 p-8 shadow-2xl">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-foreground text-center mb-2">Sign up</h2>
-          </div>
-
-          {/* Logo inside form */}
-          <div className="flex items-center justify-center mb-8">
-            <img src="/sm.png" alt="StockMaster Logo" className="h-20 w-auto" />
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+      <div className="max-w-md w-full bg-gray-900 rounded-xl border border-gray-800 p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+          <p className="text-gray-400">Sign up for StockMaster</p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive text-sm">
+          <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Enter Login Id
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-sm"
-                  placeholder="Enter login ID"
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Full Name *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="John Doe"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Enter Email Id</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-sm"
-                  placeholder="Enter email"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="john@example.com"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Enter Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-sm"
-                  placeholder="Enter password"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Password *</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                minLength={6}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="At least 6 characters"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Re-Enter Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-sm"
-                  placeholder="Re-enter password"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Confirm Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+                minLength={6}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Confirm your password"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Requested Role *
-              </label>
-              <div className="relative">
-                <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  required
-                  className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none backdrop-blur-sm"
-                >
-                  <option value="OPERATOR">Operator - Daily Operations</option>
-                  <option value="MANAGER">Manager - Approvals & Management</option>
-                </select>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground/70">
-                {formData.role === 'OPERATOR' 
-                  ? 'Handle receipts, deliveries, requisitions, and adjustments'
-                  : 'Approve requisitions, create transfers, and monitor analytics'
-                }
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Note/Reason (Optional)
+            </label>
+            <textarea
+              value={formData.note}
+              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional: Add a note or reason for your registration request..."
+            />
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-colors font-medium"
-            >
-              {loading ? 'Creating Account...' : 'SIGN UP'}
-            </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
 
-            <div className="text-center text-xs text-muted-foreground">
-              <p>Already have an account? <Link href="/auth/signin" className="text-primary hover:text-primary/80">Sign in</Link></p>
-            </div>
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            Already have an account?{' '}
+            <Link href="/auth/signin" className="text-blue-400 hover:text-blue-300">
+              Sign in
+            </Link>
+          </p>
+        </div>
 
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg backdrop-blur-sm">
-              <p className="text-yellow-600 dark:text-yellow-400 text-xs">
-                ⚠️ Your account will be reviewed and approved by an administrator. You will be assigned 
-                to one specific warehouse based on your requested role and operational needs.
-              </p>
-            </div>
-          </form>
+        <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+          <p className="text-yellow-400 text-xs">
+            ⚠️ Your account will be reviewed and approved by an administrator. Once approved, you will be assigned 
+            a role (Manager or Operator) and one or more warehouses based on operational needs.
+          </p>
         </div>
       </div>
     </div>
   );
 }
-

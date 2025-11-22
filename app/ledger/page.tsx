@@ -30,9 +30,10 @@ export default function LedgerPage() {
     try {
       const res = await fetch('/api/ledger');
       const data = await res.json();
-      setMovements(data.movements || []);
+      setMovements(Array.isArray(data.movements) ? data.movements : Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch movements:', error);
+      setMovements([]);
     } finally {
       setLoading(false);
     }

@@ -70,8 +70,8 @@ export default function NewAdjustmentPage() {
       ]);
       const productsData = await productsRes.json();
       const warehousesData = await warehousesRes.json();
-      setProducts(productsData.products || []);
-      setWarehouses(warehousesData || []);
+      setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -81,7 +81,7 @@ export default function NewAdjustmentPage() {
     try {
       const res = await fetch(`/api/locations?warehouseId=${warehouseId}`);
       const data = await res.json();
-      setLocations(data || []);
+      setLocations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch locations:', err);
     }

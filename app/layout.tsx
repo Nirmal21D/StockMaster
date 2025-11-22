@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import ChatbotButton from '@/components/ChatbotButton';
 
 const poppins = Poppins({ 
   subsets: ['latin'],
@@ -22,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ChatbotButton />
+        </Providers>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,6 +27,7 @@ interface RequisitionLine {
 
 export default function NewRequisitionPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
@@ -38,9 +40,35 @@ export default function NewRequisitionPage() {
     { productId: '', quantityRequested: 1, neededByDate: '' },
   ]);
 
+  const userRole = (session?.user as any)?.role;
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Redirect Admins and Operators - only Managers can create requisitions
+    if (session && (userRole === 'ADMIN' || userRole === 'OPERATOR')) {
+      router.push('/requisitions');
+      return;
+    }
+    if (session && userRole === 'MANAGER') {
+      fetchData();
+    }
+  }, [session, userRole, router]);
+
+  useEffect(() => {
+    // Auto-select Manager's or Operator's warehouse
+    if ((userRole === 'MANAGER' || userRole === 'OPERATOR') && warehouses.length > 0) {
+      const mainWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+      if (mainWarehouseId && !formData.requestingWarehouseId) {
+        // Check if the warehouse exists in the fetched warehouses list
+        const warehouseExists = warehouses.some((wh) => wh._id === mainWarehouseId);
+        if (warehouseExists) {
+          setFormData((prev) => ({ ...prev, requestingWarehouseId: mainWarehouseId }));
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouses.length, userRole, primaryWarehouseId, assignedWarehouses.length]);
 
   const fetchData = async () => {
     try {
@@ -50,8 +78,8 @@ export default function NewRequisitionPage() {
       ]);
       const productsData = await productsRes.json();
       const warehousesData = await warehousesRes.json();
-      setProducts(productsData.products || []);
-      setWarehouses(warehousesData || []);
+      setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -118,6 +146,28 @@ export default function NewRequisitionPage() {
     }
   };
 
+  // Show access denied for Admins and Operators
+  if (session && (userRole === 'ADMIN' || userRole === 'OPERATOR')) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/requisitions"
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-400" />
+          </Link>
+          <h1 className="text-3xl font-bold text-white">New Requisition</h1>
+        </div>
+        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+            Access Denied: Only Managers can create requisitions. Requisitions are automatically submitted upon creation.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -142,19 +192,27 @@ export default function NewRequisitionPage() {
             <label className="block text-sm font-medium text-foreground mb-2">
               Requesting Warehouse *
             </label>
-            <select
-              required
-              value={formData.requestingWarehouseId}
-              onChange={(e) => setFormData({ ...formData, requestingWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Select warehouse</option>
-              {warehouses.map((wh) => (
-                <option key={wh._id} value={wh._id}>
-                  {wh.name} ({wh.code})
-                </option>
-              ))}
-            </select>
+            {(userRole === 'MANAGER' || userRole === 'OPERATOR') && formData.requestingWarehouseId ? (
+              <div className="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-400">
+                {warehouses.find((wh) => wh._id === formData.requestingWarehouseId)?.name || 'Loading...'} (
+                {warehouses.find((wh) => wh._id === formData.requestingWarehouseId)?.code || ''})
+                <span className="ml-2 text-xs text-blue-400">(Auto-selected)</span>
+              </div>
+            ) : (
+              <select
+                required
+                value={formData.requestingWarehouseId}
+                onChange={(e) => setFormData({ ...formData, requestingWarehouseId: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select warehouse</option>
+                {warehouses.map((wh) => (
+                  <option key={wh._id} value={wh._id}>
+                    {wh.name} ({wh.code})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div>

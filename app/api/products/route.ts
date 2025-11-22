@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Product from '@/lib/models/Product';
+import StockLevel from '@/lib/models/StockLevel';
 import { requireAuth, requireRole } from '@/lib/middleware';
+import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,8 +43,32 @@ export async function GET(request: NextRequest) {
 
     const total = await Product.countDocuments(query);
 
+    // Get warehouse filter for Operators
+    const userRole = (session.user as any)?.role;
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    let warehouseFilter: mongoose.Types.ObjectId[] | null = null;
+    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      warehouseFilter = assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id));
+    }
+
+    // Get total quantities for each product
+    const productsWithQuantities = await Promise.all(
+      products.map(async (product) => {
+        const stockQuery: any = { productId: product._id };
+        if (warehouseFilter) {
+          stockQuery.warehouseId = { $in: warehouseFilter };
+        }
+        const stockLevels = await StockLevel.find(stockQuery);
+        const totalQuantity = stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+        return {
+          ...product.toObject(),
+          totalQuantity,
+        };
+      })
+    );
+
     return NextResponse.json({
-      products,
+      products: productsWithQuantities,
       pagination: {
         page,
         limit,
@@ -63,7 +89,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { name, sku, category, unit, price, reorderLevel, abcClass } = body;
+    const { name, sku, category, unit, price, reorderLevel, abcClass, description, isActive } = body;
 
     if (!name || !sku || !unit || reorderLevel === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -77,6 +103,8 @@ export async function POST(request: NextRequest) {
       price,
       reorderLevel,
       abcClass,
+      description,
+      isActive: isActive !== undefined ? isActive : true,
     });
 
     return NextResponse.json(product, { status: 201 });
