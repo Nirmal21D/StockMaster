@@ -1,21 +1,37 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Chatbot from './Chatbot';
 
 export default function ChatbotButton() {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const pathname = usePathname();
+  const { data: session, status } = useSession();
+
+  // Don't show chatbot on authentication pages or when not authenticated
+  const shouldShowChatbot = session && 
+                           !pathname.startsWith('/auth') && 
+                           !pathname.startsWith('/signup') && 
+                           pathname !== '/' &&
+                           pathname !== '/landing';
 
   const toggleChatbot = () => {
     setIsChatbotOpen(!isChatbotOpen);
   };
+
+  // Don't render anything if we shouldn't show the chatbot or still loading
+  if (status === 'loading' || !shouldShowChatbot) {
+    return null;
+  }
 
   return (
     <>
       {/* Floating Chat Button */}
       <button
         onClick={toggleChatbot}
-        className={`fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg transition-all duration-200 z-40 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-300 ${
+        className={`fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg transition-all duration-200 z-50 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-300 ${
           isChatbotOpen
             ? 'bg-gray-600 hover:bg-gray-700 rotate-45'
             : 'bg-blue-600 hover:bg-blue-700 hover:scale-110'
@@ -66,7 +82,7 @@ export default function ChatbotButton() {
       {/* Backdrop for mobile - optional */}
       {isChatbotOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-25 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-25 z-40 md:hidden"
           onClick={() => setIsChatbotOpen(false)}
         />
       )}
