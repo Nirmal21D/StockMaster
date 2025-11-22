@@ -1,9 +1,6 @@
 "use client"
 import React from 'react'
 import { motion } from 'framer-motion'
-// @ts-ignore
-import LogoLoop from '@/components/LogoLoop'
-import '@/components/LogoLoop.css'
 
 export function TestimonialsSection() {
   const logos = [
@@ -62,20 +59,19 @@ export function TestimonialsSection() {
           </h2>
         </motion.div>
 
-        <div className="relative overflow-hidden">
-          {/* @ts-ignore */}
-          <LogoLoop
-            logos={logos}
-            speed={60}
-            direction="left"
-            logoHeight={50}
-            gap={120}
-            pauseOnHover={true}
-            fadeOut={true}
-            scaleOnHover={true}
-            ariaLabel="Partner and client logos"
-            className="max-w-full"
-          />
+        <div className="relative overflow-hidden py-8">
+          <div className="flex space-x-8 animate-pulse">
+            {logos.map((logo, index) => (
+              <div key={index} className="flex-shrink-0">
+                <img 
+                  src={logo.src} 
+                  alt={logo.alt} 
+                  title={logo.title}
+                  className="h-12 w-auto opacity-60 hover:opacity-100 transition-opacity"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -7,7 +7,7 @@ export interface IRequisitionLine {
 }
 
 export interface IRequisition extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   requisitionNumber: string;
   requestingWarehouseId: mongoose.Types.ObjectId;
   suggestedSourceWarehouseId?: mongoose.Types.ObjectId;

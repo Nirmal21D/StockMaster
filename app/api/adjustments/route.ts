@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       difference,
       'ADJUSTMENT',
       'ADJUSTMENT',
-      adjustment._id,
+      new mongoose.Types.ObjectId(adjustment._id.toString()),
       userId
     );
 

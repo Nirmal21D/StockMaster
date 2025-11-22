@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ILocation extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   warehouseId: mongoose.Types.ObjectId;
   name: string;
   code?: string;

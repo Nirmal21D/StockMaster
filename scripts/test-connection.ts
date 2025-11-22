@@ -17,11 +17,17 @@ console.log('Connection string:', MONGODB_URI.replace(/:[^:@]+@/, ':****@')); //
 
 async function testConnection() {
   try {
+    if (!MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined');
+    }
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connection successful!');
     
     // Test a simple operation
     const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not established');
+    }
     const collections = await db.listCollections().toArray();
     console.log(`📦 Found ${collections.length} collections in database`);
     

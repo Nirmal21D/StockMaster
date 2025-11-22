@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IAdjustment extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   adjustmentNumber: string;
   productId: mongoose.Types.ObjectId;
   warehouseId: mongoose.Types.ObjectId;

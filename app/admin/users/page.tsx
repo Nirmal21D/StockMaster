@@ -568,7 +568,15 @@ function UserFormDialog({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    role: 'ADMIN' | 'MANAGER' | 'OPERATOR' | '';
+    status: 'PENDING' | 'ACTIVE' | 'INACTIVE';
+    assignedWarehouses: string[];
+    primaryWarehouseId: string;
+  }>({
     name: user?.name || '',
     email: user?.email || '',
     password: '',
@@ -667,13 +675,14 @@ function UserFormDialog({
             <label className="block text-sm font-medium text-foreground mb-2">Role *</label>
             <select
               value={formData.role || ''}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'MANAGER' | 'OPERATOR' })}
               required
               className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select role</option>
-              <option value="OPERATOR">Operator</option>
+              <option value="ADMIN">Admin</option>
               <option value="MANAGER">Manager</option>
+              <option value="OPERATOR">Operator</option>
             </select>
           </div>
           <div>
@@ -711,7 +720,7 @@ function UserFormDialog({
                     });
                   }
                 }}
-                required={formData.role !== 'ADMIN'}
+                required={formData.role === 'MANAGER' || formData.role === 'OPERATOR'}
                 className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select warehouse</option>

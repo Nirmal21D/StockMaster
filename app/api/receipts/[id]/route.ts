@@ -103,7 +103,7 @@ export async function POST(
         line.quantity,
         'RECEIPT',
         'RECEIPT',
-        receipt._id,
+        new mongoose.Types.ObjectId(receipt._id.toString()),
         userId,
         undefined,
         undefined,

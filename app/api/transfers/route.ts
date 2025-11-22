@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         requisitionId: delivery.requisitionId ? new mongoose.Types.ObjectId(delivery.requisitionId._id) : undefined,
         deliveryId: new mongoose.Types.ObjectId(deliveryId),
         sourceWarehouseId: new mongoose.Types.ObjectId(delivery.warehouseId._id),
-        targetWarehouseId: new mongoose.Types.ObjectId(delivery.targetWarehouseId._id),
+        targetWarehouseId: delivery.targetWarehouseId ? new mongoose.Types.ObjectId(delivery.targetWarehouseId._id) : new mongoose.Types.ObjectId(targetWarehouseId),
         lines: delivery.lines.map((line: any) => ({
           productId: line.productId,
           quantity: line.quantity,

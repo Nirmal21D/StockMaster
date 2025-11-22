@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IWarehouse extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   name: string;
   code: string;
   address?: string;

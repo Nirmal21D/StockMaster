@@ -8,7 +8,7 @@ export interface ITransferLine {
 }
 
 export interface ITransfer extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   transferNumber: string;
   requisitionId?: mongoose.Types.ObjectId;
   deliveryId?: mongoose.Types.ObjectId; // Link to delivery

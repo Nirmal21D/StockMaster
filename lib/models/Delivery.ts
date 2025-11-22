@@ -7,7 +7,7 @@ export interface IDeliveryLine {
 }
 
 export interface IDelivery extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   deliveryNumber: string;
   customerName?: string;
   deliveryAddress?: string;

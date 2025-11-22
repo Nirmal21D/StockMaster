@@ -199,7 +199,6 @@ export default function DeliveryDetailPage() {
   // Operator can validate if delivery is READY or DRAFT (only for non-requisition deliveries) and they are from the source warehouse
   const canValidate = ['ADMIN', 'OPERATOR'].includes(userRole) && 
     (delivery?.status === 'READY' || delivery?.status === 'DRAFT') &&
-    delivery?.status !== 'DONE' &&
     !delivery?.requisitionId && // Only manual deliveries can be validated
     (userRole === 'ADMIN' || 
      (delivery?.warehouseId?._id && assignedWarehouses.includes(delivery.warehouseId._id)));

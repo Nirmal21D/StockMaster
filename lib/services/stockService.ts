@@ -177,3 +177,13 @@ export async function checkStockAvailability(
   };
 }
 
+// Export as named object for easier importing
+export const stockService = {
+  increaseStock,
+  decreaseStock,
+  getTotalStock,
+  updateStock,
+  getAvailableStock,
+  checkStockAvailability,
+};
+

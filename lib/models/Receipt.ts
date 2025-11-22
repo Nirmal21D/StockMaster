@@ -7,7 +7,7 @@ export interface IReceiptLine {
 }
 
 export interface IReceipt extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   receiptNumber: string;
   supplierName?: string;
   warehouseId: mongoose.Types.ObjectId;

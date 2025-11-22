@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IStockMovement extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   productId: mongoose.Types.ObjectId;
   warehouseFromId?: mongoose.Types.ObjectId;
   locationFromId?: mongoose.Types.ObjectId;

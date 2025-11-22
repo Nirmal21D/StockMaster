@@ -8,6 +8,7 @@ import Warehouse from '@/lib/models/Warehouse';
 import Location from '@/lib/models/Location';
 import { stockService } from '@/lib/services/stockService';
 import { ReceiptImportData } from '@/lib/services/excelImportService';
+import mongoose from 'mongoose';
 
 interface GroupedReceiptData {
   supplierName: string;
@@ -155,14 +156,15 @@ export async function POST(request: NextRequest) {
 
         // Auto-validate the receipt (update stock levels)
         for (const line of receiptGroup.lines) {
-          await stockService.increaseStock(
-            line.productId,
-            receiptGroup.warehouseId,
+          await stockService.updateStock(
+            new mongoose.Types.ObjectId(line.productId),
+            new mongoose.Types.ObjectId(receiptGroup.warehouseId),
+            line.locationId ? new mongoose.Types.ObjectId(line.locationId) : undefined,
             line.quantity,
-            line.locationId,
             'RECEIPT',
-            receipt._id.toString(),
-            (session.user as any).id
+            'RECEIPT',
+            new mongoose.Types.ObjectId(receipt._id.toString()),
+            new mongoose.Types.ObjectId((session.user as any).id)
           );
         }
 
