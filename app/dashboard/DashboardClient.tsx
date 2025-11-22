@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,40 +41,49 @@ function KPICard({ title, value, icon, href, color }: KPICardProps) {
 }
 
 export default function DashboardClient({ initialData }: { initialData: DashboardData }) {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<DashboardData>(initialData);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const updateFromUrl = () => {
-      if (typeof window === 'undefined') return;
-      const params = new URLSearchParams(window.location.search);
-      const warehouseParam = params.get('warehouse') || '';
-      
-      if (warehouseParam) {
-        setLoading(true);
-        fetch(`/api/dashboard?warehouseId=${warehouseParam}`)
-          .then((res) => res.json())
-          .then((newData) => {
-            setData(newData);
-            setLoading(false);
-          })
-          .catch(() => setLoading(false));
-      } else {
-        setData(initialData);
-      }
-    };
+  // Get warehouse ID from URL params - memoized to prevent unnecessary re-renders
+  const warehouseId = useMemo(() => {
+    return searchParams.get('warehouse') || '';
+  }, [searchParams]);
 
-    updateFromUrl();
-    // Listen for URL changes (from WarehouseFilter component)
-    window.addEventListener('popstate', updateFromUrl);
-    // Also check periodically in case WarehouseFilter updates URL via router.push
-    const interval = setInterval(updateFromUrl, 300);
-    
+  // Fetch dashboard data only when warehouseId changes
+  useEffect(() => {
+    // If no warehouse selected, use initial data
+    if (!warehouseId) {
+      setData(initialData);
+      return;
+    }
+
+    // Fetch data for selected warehouse
+    let cancelled = false;
+    setLoading(true);
+
+    fetch(`/api/dashboard?warehouseId=${warehouseId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch dashboard data');
+        return res.json();
+      })
+      .then((newData) => {
+        if (!cancelled) {
+          setData(newData);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error('Dashboard fetch error:', error);
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('popstate', updateFromUrl);
+      cancelled = true;
     };
-  }, [initialData]);
+  }, [warehouseId, initialData]);
 
   return (
     <div className="space-y-6">
