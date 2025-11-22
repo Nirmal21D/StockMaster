@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle, Printer } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Printer, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -13,6 +13,8 @@ interface Delivery {
   customerName?: string;
   deliveryAddress?: string;
   warehouseId: any;
+  targetWarehouseId?: any;
+  requisitionId?: any;
   status: string;
   reference?: string;
   notes?: string;
@@ -20,9 +22,11 @@ interface Delivery {
   createdAt: string;
   createdBy: any;
   validatedBy?: any;
+  acceptedBy?: any;
   scheduleDate?: string;
   responsible?: string;
   validatedAt?: string;
+  acceptedAt?: string;
 }
 
 export default function DeliveryDetailPage() {
@@ -63,6 +67,8 @@ export default function DeliveryDetailPage() {
     try {
       const response = await fetch(`/api/deliveries/${deliveryId}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate' }),
       });
 
       if (!response.ok) {
@@ -79,6 +85,65 @@ export default function DeliveryDetailPage() {
     }
   };
 
+  const handleApprove = async () => {
+    if (!confirm('Are you sure you want to approve this delivery? This will mark it as ready for transfer.')) {
+      return;
+    }
+
+    setValidating(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/deliveries/${deliveryId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to approve delivery');
+      }
+
+      await fetchDelivery();
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason === null) {
+      return; // User cancelled
+    }
+
+    setValidating(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/deliveries/${deliveryId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', reason: reason || 'Rejected by manager' }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to reject delivery');
+      }
+
+      await fetchDelivery();
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setValidating(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
@@ -87,13 +152,78 @@ export default function DeliveryDetailPage() {
         return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
       case 'WAITING':
         return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+      case 'REJECTED':
+        return 'bg-red-500/20 text-red-400 border-red-500/50';
       default:
         return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
     }
   };
 
   const userRole = (session?.user as any)?.role;
-  const canValidate = ['ADMIN', 'OPERATOR'].includes(userRole) && delivery?.status !== 'DONE';
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  
+  // Manager can approve/reject if delivery is WAITING and they are from the target warehouse
+  const canApprove = (() => {
+    // Early returns for missing data
+    if (loading || !session || !delivery) return false;
+    if (userRole !== 'MANAGER') return false;
+    if (delivery.status !== 'WAITING') return false;
+    if (!delivery.targetWarehouseId) return false;
+    
+    // Handle both populated and unpopulated targetWarehouseId
+    const targetWarehouseIdObj = delivery.targetWarehouseId;
+    const targetWarehouseId = (targetWarehouseIdObj as any)?._id || targetWarehouseIdObj;
+    const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+    
+    // Build manager's warehouse IDs list
+    const managerWarehouseIds: string[] = [];
+    if (primaryWarehouseId) {
+      managerWarehouseIds.push(primaryWarehouseId.toString());
+    }
+    assignedWarehouses.forEach((whId: any) => {
+      const whIdStr = whId?.toString ? whId.toString() : String(whId);
+      if (!managerWarehouseIds.includes(whIdStr)) {
+        managerWarehouseIds.push(whIdStr);
+      }
+    });
+    
+    // Check if manager has access to target warehouse
+    const hasAccess = managerWarehouseIds.includes(targetWarehouseIdStr);
+    
+    return hasAccess;
+  })();
+
+  const canReject = canApprove; // Same conditions as approve
+  
+  // Operator can validate if delivery is READY or DRAFT (only for non-requisition deliveries) and they are from the source warehouse
+  const canValidate = ['ADMIN', 'OPERATOR'].includes(userRole) && 
+    (delivery?.status === 'READY' || delivery?.status === 'DRAFT') &&
+    delivery?.status !== 'DONE' &&
+    !delivery?.requisitionId && // Only manual deliveries can be validated
+    (userRole === 'ADMIN' || 
+     (delivery?.warehouseId?._id && assignedWarehouses.includes(delivery.warehouseId._id)));
+  
+  // Operator can create transfer if delivery is READY (accepted by manager) and they are from the source warehouse
+  const canCreateTransfer = (() => {
+    if (!session || !delivery || loading) return false;
+    if (userRole !== 'OPERATOR') return false;
+    if (delivery.status !== 'READY') return false;
+    if (!delivery.requisitionId) return false; // Only requisition-based deliveries can create transfers
+    
+    // Verify Operator is from the source warehouse
+    if (!delivery.warehouseId) return false;
+    const sourceWarehouseIdObj = delivery.warehouseId;
+    const sourceWarehouseId = (sourceWarehouseIdObj as any)?._id || sourceWarehouseIdObj;
+    const sourceWarehouseIdStr = sourceWarehouseId?.toString ? sourceWarehouseId.toString() : String(sourceWarehouseId);
+    
+    const hasAccess = assignedWarehouses.some((whId: any) => {
+      const whIdStr = whId?.toString ? whId.toString() : String(whId);
+      return whIdStr === sourceWarehouseIdStr;
+    });
+    
+    return hasAccess;
+  })();
 
   if (loading) {
     return (
@@ -149,6 +279,26 @@ export default function DeliveryDetailPage() {
           >
             {delivery.status}
           </span>
+          {canApprove && (
+            <>
+              <button
+                onClick={handleApprove}
+                disabled={validating}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                <CheckCircle className="w-4 h-4" />
+                {validating ? 'Approving...' : 'Approve Delivery'}
+              </button>
+            <button
+                onClick={handleReject}
+              disabled={validating}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+                {validating ? 'Rejecting...' : 'Reject Delivery'}
+            </button>
+            </>
+          )}
           {canValidate && (
             <button
               onClick={handleValidate}
@@ -158,6 +308,15 @@ export default function DeliveryDetailPage() {
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Validating...' : 'Validate'}
             </button>
+          )}
+          {canCreateTransfer && (
+            <Link
+              href={`/transfers/new?deliveryId=${deliveryId}`}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Create Transfer
+            </Link>
           )}
           <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
             <Printer className="w-4 h-4" />
@@ -183,12 +342,37 @@ export default function DeliveryDetailPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">
-              Warehouse
+              Source Warehouse
             </label>
             <p className="text-white">
               {delivery.warehouseId?.name} ({delivery.warehouseId?.code})
             </p>
           </div>
+
+          {delivery.targetWarehouseId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Target Warehouse
+              </label>
+              <p className="text-white">
+                {delivery.targetWarehouseId?.name} ({delivery.targetWarehouseId?.code})
+              </p>
+            </div>
+          )}
+
+          {delivery.requisitionId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Requisition
+              </label>
+              <Link
+                href={`/requisitions/${delivery.requisitionId._id}`}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                {delivery.requisitionId?.requisitionNumber || delivery.requisitionId}
+              </Link>
+            </div>
+          )}
 
           {delivery.deliveryAddress && (
             <div className="md:col-span-2">
@@ -237,6 +421,23 @@ export default function DeliveryDetailPage() {
             </label>
             <p className="text-white">{formatDate(delivery.createdAt)}</p>
           </div>
+
+          {delivery.acceptedBy && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Accepted By
+                </label>
+                <p className="text-white">{delivery.acceptedBy?.name || '-'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Accepted At
+                </label>
+                <p className="text-white">{formatDate(delivery.acceptedAt!)}</p>
+              </div>
+            </>
+          )}
 
           {delivery.validatedBy && (
             <>

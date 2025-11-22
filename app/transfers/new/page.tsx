@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 interface Product {
   _id: string;
@@ -39,10 +40,21 @@ interface TransferLine {
   quantity: number;
 }
 
+interface Delivery {
+  _id: string;
+  deliveryNumber: string;
+  warehouseId: any;
+  targetWarehouseId?: any;
+  requisitionId?: any;
+  lines: any[];
+}
+
 export default function NewTransferPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const requisitionId = searchParams.get('requisitionId');
+  const deliveryId = searchParams.get('deliveryId');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
@@ -50,8 +62,11 @@ export default function NewTransferPage() {
   const [sourceLocations, setSourceLocations] = useState<Location[]>([]);
   const [targetLocations, setTargetLocations] = useState<Location[]>([]);
   const [requisition, setRequisition] = useState<Requisition | null>(null);
+  const [delivery, setDelivery] = useState<Delivery | null>(null);
+  const [availableDeliveries, setAvailableDeliveries] = useState<Delivery[]>([]);
   const [formData, setFormData] = useState({
     requisitionId: requisitionId || '',
+    deliveryId: deliveryId || '',
     sourceWarehouseId: '',
     targetWarehouseId: '',
   });
@@ -62,7 +77,15 @@ export default function NewTransferPage() {
     if (requisitionId) {
       fetchRequisition();
     }
-  }, [requisitionId]);
+    if (deliveryId) {
+      fetchDelivery();
+    }
+    // Fetch available deliveries for operators
+    const userRole = (session?.user as any)?.role;
+    if (userRole === 'OPERATOR') {
+      fetchAvailableDeliveries();
+    }
+  }, [requisitionId, deliveryId, session]);
 
   useEffect(() => {
     if (formData.sourceWarehouseId) {
@@ -81,8 +104,8 @@ export default function NewTransferPage() {
       ]);
       const productsData = await productsRes.json();
       const warehousesData = await warehousesRes.json();
-      setProducts(productsData.products || []);
-      setWarehouses(warehousesData || []);
+      setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -96,6 +119,7 @@ export default function NewTransferPage() {
         setRequisition(data);
         setFormData({
           requisitionId: data._id,
+          deliveryId: '',
           sourceWarehouseId: data.finalSourceWarehouseId?._id || data.suggestedSourceWarehouseId?._id || '',
           targetWarehouseId: data.requestingWarehouseId?._id || '',
         });
@@ -110,6 +134,94 @@ export default function NewTransferPage() {
       }
     } catch (err) {
       console.error('Failed to fetch requisition:', err);
+    }
+  };
+
+  const fetchDelivery = async () => {
+    try {
+      const res = await fetch(`/api/deliveries/${deliveryId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDelivery(data);
+        setFormData({
+          requisitionId: data.requisitionId?._id || data.requisitionId || '',
+          deliveryId: data._id,
+          sourceWarehouseId: data.warehouseId._id || data.warehouseId,
+          targetWarehouseId: data.targetWarehouseId?._id || data.targetWarehouseId || '',
+        });
+        setLines(
+          data.lines.map((line: any) => ({
+            productId: line.productId._id || line.productId,
+            sourceLocationId: line.fromLocationId?._id || line.fromLocationId || '',
+            targetLocationId: '',
+            quantity: line.quantity,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to fetch delivery:', err);
+    }
+  };
+
+  const fetchAvailableDeliveries = async () => {
+    try {
+      // Fetch READY deliveries where operator's warehouse is the source warehouse
+      const res = await fetch('/api/deliveries?status=READY');
+      if (res.ok) {
+        const data = await res.json();
+        const deliveries = Array.isArray(data) ? data : [];
+        const userRole = (session?.user as any)?.role;
+        const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+        
+        // Filter deliveries where operator's warehouse is the source warehouse (warehouseId)
+        const filtered = deliveries.filter((del: Delivery) => {
+          if (!del.warehouseId || !del.requisitionId) return false; // Only requisition-based deliveries
+          const sourceWarehouseId = (del.warehouseId as any)?._id || del.warehouseId;
+          const sourceWarehouseIdStr = sourceWarehouseId?.toString ? sourceWarehouseId.toString() : String(sourceWarehouseId);
+          return assignedWarehouses.some((whId: any) => {
+            const whIdStr = whId?.toString ? whId.toString() : String(whId);
+            return whIdStr === sourceWarehouseIdStr;
+          });
+        });
+        
+        setAvailableDeliveries(filtered);
+      }
+    } catch (err) {
+      console.error('Failed to fetch available deliveries:', err);
+    }
+  };
+
+  const handleDeliverySelect = async (selectedDeliveryId: string) => {
+    if (!selectedDeliveryId) {
+      setDelivery(null);
+      setFormData(prev => ({ ...prev, deliveryId: '', sourceWarehouseId: '', targetWarehouseId: '' }));
+      setLines([]);
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/deliveries/${selectedDeliveryId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDelivery(data);
+        setFormData({
+          requisitionId: data.requisitionId?._id || data.requisitionId || '',
+          deliveryId: data._id,
+          sourceWarehouseId: data.warehouseId._id || data.warehouseId,
+          targetWarehouseId: data.targetWarehouseId?._id || data.targetWarehouseId || '',
+        });
+        setLines(
+          data.lines.map((line: any) => ({
+            productId: line.productId._id || line.productId,
+            sourceLocationId: line.fromLocationId?._id || line.fromLocationId || '',
+            targetLocationId: '',
+            quantity: line.quantity,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to fetch selected delivery:', err);
+      setError('Failed to load delivery details');
     }
   };
 
@@ -172,6 +284,7 @@ export default function NewTransferPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requisitionId: formData.requisitionId || undefined,
+          deliveryId: formData.deliveryId || undefined,
           sourceWarehouseId: formData.sourceWarehouseId,
           targetWarehouseId: formData.targetWarehouseId,
           lines: validLines.map((line) => ({
@@ -211,12 +324,45 @@ export default function NewTransferPage() {
             (From Requisition: {requisition.requisitionNumber})
           </span>
         )}
+        {delivery && (
+          <span className="text-sm text-gray-400">
+            (From Delivery: {delivery.deliveryNumber})
+          </span>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
         {error && (
           <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
             {error}
+          </div>
+        )}
+
+        {/* Delivery Selection for Operators */}
+        {(session?.user as any)?.role === 'OPERATOR' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Select Approved Delivery (Waiting for Dispatch)
+            </label>
+            <select
+              value={formData.deliveryId}
+              onChange={(e) => handleDeliverySelect(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select a delivery to create transfer (optional)</option>
+              {availableDeliveries.length > 0 ? (
+                availableDeliveries.map((del) => (
+                  <option key={del._id} value={del._id}>
+                    {del.deliveryNumber} - To: {del.targetWarehouseId?.name || 'Unknown'} ({del.targetWarehouseId?.code || ''}) - {del.lines?.length || 0} items
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No approved deliveries waiting for dispatch</option>
+              )}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              These are deliveries approved by managers that are waiting to be dispatched from your warehouse. Selecting one will auto-fill the transfer details.
+            </p>
           </div>
         )}
 
@@ -230,6 +376,7 @@ export default function NewTransferPage() {
               value={formData.sourceWarehouseId}
               onChange={(e) => setFormData({ ...formData, sourceWarehouseId: e.target.value })}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!!delivery}
             >
               <option value="">Select source warehouse</option>
               {warehouses.map((wh) => (
@@ -249,6 +396,7 @@ export default function NewTransferPage() {
               value={formData.targetWarehouseId}
               onChange={(e) => setFormData({ ...formData, targetWarehouseId: e.target.value })}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!!delivery}
             >
               <option value="">Select target warehouse</option>
               {warehouses

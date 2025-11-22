@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,15 +32,16 @@ interface DeliveryLine {
 
 export default function NewDeliveryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requisitionId = searchParams.get('requisitionId');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [formData, setFormData] = useState({
-    customerName: '',
-    deliveryAddress: '',
-    warehouseId: '',
+    warehouseId: '', // Source warehouse
+    targetWarehouseId: '', // Target warehouse (destination)
     reference: '',
     notes: '',
     scheduleDate: '',
@@ -52,7 +53,10 @@ export default function NewDeliveryPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (requisitionId) {
+      fetchRequisition(requisitionId);
+    }
+  }, [requisitionId]);
 
   useEffect(() => {
     if (formData.warehouseId) {
@@ -68,8 +72,8 @@ export default function NewDeliveryPage() {
       ]);
       const productsData = await productsRes.json();
       const warehousesData = await warehousesRes.json();
-      setProducts(productsData.products || []);
-      setWarehouses(warehousesData || []);
+      setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -79,9 +83,53 @@ export default function NewDeliveryPage() {
     try {
       const res = await fetch(`/api/locations?warehouseId=${warehouseId}`);
       const data = await res.json();
-      setLocations(data || []);
+      setLocations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch locations:', err);
+    }
+  };
+
+  const fetchRequisition = async (reqId: string) => {
+    try {
+      const res = await fetch(`/api/requisitions/${reqId}`);
+      if (res.ok) {
+        const requisition = await res.json();
+        // Pre-fill form with requisition data
+        if (requisition.finalSourceWarehouseId?._id && requisition.requestingWarehouseId?._id) {
+          // Fetch manager of requesting warehouse for responsible field
+          let responsiblePerson = '';
+          try {
+            const managerRes = await fetch(`/api/admin/users?warehouseId=${requisition.requestingWarehouseId._id}&role=MANAGER`);
+            if (managerRes.ok) {
+              const managers = await managerRes.json();
+              if (Array.isArray(managers) && managers.length > 0) {
+                responsiblePerson = managers[0].name || '';
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch manager:', err);
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            warehouseId: requisition.finalSourceWarehouseId._id, // Source warehouse (where stock is coming from)
+            targetWarehouseId: requisition.requestingWarehouseId._id, // Target warehouse (where stock is going to)
+            reference: `Requisition: ${requisition.requisitionNumber}`,
+            notes: `Delivery for requisition ${requisition.requisitionNumber}`,
+            responsible: responsiblePerson, // Manager of requesting warehouse
+          }));
+        }
+        // Pre-fill lines with requisition lines
+        if (requisition.lines && requisition.lines.length > 0) {
+          setLines(requisition.lines.map((line: any) => ({
+            productId: line.productId?._id || line.productId,
+            fromLocationId: '',
+            quantity: line.quantityRequested || line.quantity,
+          })));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch requisition:', err);
     }
   };
 
@@ -104,7 +152,17 @@ export default function NewDeliveryPage() {
     setError('');
 
     if (!formData.warehouseId) {
-      setError('Please select a warehouse');
+      setError('Please select a source warehouse');
+      return;
+    }
+
+    if (!formData.targetWarehouseId) {
+      setError('Please select a target warehouse');
+      return;
+    }
+
+    if (formData.warehouseId === formData.targetWarehouseId) {
+      setError('Source and target warehouses must be different');
       return;
     }
 
@@ -124,7 +182,13 @@ export default function NewDeliveryPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          warehouseId: formData.warehouseId,
+          targetWarehouseId: formData.targetWarehouseId,
+          reference: formData.reference || undefined,
+          notes: formData.notes || undefined,
+          scheduleDate: formData.scheduleDate || undefined,
+          responsible: formData.responsible || undefined,
+          requisitionId: requisitionId || undefined,
           lines: validLines.map((line) => ({
             productId: line.productId,
             fromLocationId: line.fromLocationId || undefined,
@@ -168,20 +232,7 @@ export default function NewDeliveryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Customer Name
-            </label>
-            <input
-              type="text"
-              value={formData.customerName}
-              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter customer name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Warehouse *
+              From Warehouse (Source) *
             </label>
             <select
               required
@@ -189,7 +240,7 @@ export default function NewDeliveryPage() {
               onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select warehouse</option>
+              <option value="">Select source warehouse</option>
               {warehouses.map((wh) => (
                 <option key={wh._id} value={wh._id}>
                   {wh.name} ({wh.code})
@@ -198,17 +249,25 @@ export default function NewDeliveryPage() {
             </select>
           </div>
 
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Delivery Address
+              To Warehouse (Destination) *
             </label>
-            <input
-              type="text"
-              value={formData.deliveryAddress}
-              onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+            <select
+              required
+              value={formData.targetWarehouseId}
+              onChange={(e) => setFormData({ ...formData, targetWarehouseId: e.target.value })}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter delivery address"
-            />
+            >
+              <option value="">Select target warehouse</option>
+              {warehouses
+                .filter((wh) => wh._id !== formData.warehouseId) // Exclude source warehouse
+                .map((wh) => (
+                  <option key={wh._id} value={wh._id}>
+                    {wh.name} ({wh.code})
+                  </option>
+                ))}
+            </select>
           </div>
 
           <div>

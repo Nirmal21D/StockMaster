@@ -19,6 +19,7 @@ export default function NewProductPage() {
     price: '',
     reorderLevel: '0',
     abcClass: '',
+    description: '',
   });
 
   const userRole = (session?.user as any)?.role;
@@ -54,6 +55,7 @@ export default function NewProductPage() {
           price: formData.price ? parseFloat(formData.price) : undefined,
           reorderLevel: parseInt(formData.reorderLevel) || 0,
           abcClass: formData.abcClass || undefined,
+          description: formData.description || undefined,
         }),
       });
 

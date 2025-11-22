@@ -12,7 +12,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'OPERATOR',
+    note: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export default function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role,
+          note: formData.note,
         }),
       });
 
@@ -73,7 +73,7 @@ export default function SignupPage() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Registration Successful!</h1>
           <p className="text-gray-400 mb-4">
-            Your account with <strong>{formData.role}</strong> role is pending approval by an administrator. 
+            Your account is pending approval by an administrator. 
             You will be redirected to the login page shortly.
           </p>
         </div>
@@ -164,26 +164,15 @@ export default function SignupPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Requested Role *
+              Note/Reason (Optional)
             </label>
-            <div className="relative">
-              <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                required
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              >
-                <option value="OPERATOR">Operator - Daily Operations</option>
-                <option value="MANAGER">Manager - Approvals & Management</option>
-              </select>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {formData.role === 'OPERATOR' 
-                ? 'Handle receipts, deliveries, requisitions, and adjustments'
-                : 'Approve requisitions, create transfers, and monitor analytics'
-              }
-            </p>
+            <textarea
+              value={formData.note}
+              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional: Add a note or reason for your registration request..."
+            />
           </div>
 
           <button
@@ -206,8 +195,8 @@ export default function SignupPage() {
 
         <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
           <p className="text-yellow-400 text-xs">
-            ⚠️ Your account will be reviewed and approved by an administrator. You will be assigned 
-            to one specific warehouse based on your requested role and operational needs.
+            ⚠️ Your account will be reviewed and approved by an administrator. Once approved, you will be assigned 
+            a role (Manager or Operator) and one or more warehouses based on operational needs.
           </p>
         </div>
       </div>

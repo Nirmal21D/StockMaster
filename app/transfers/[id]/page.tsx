@@ -11,6 +11,7 @@ interface Transfer {
   _id: string;
   transferNumber: string;
   requisitionId?: any;
+  deliveryId?: any;
   sourceWarehouseId: any;
   targetWarehouseId: any;
   status: string;
@@ -18,6 +19,7 @@ interface Transfer {
   createdAt: string;
   createdBy: any;
   validatedBy?: any;
+  dispatchedAt?: string;
   receivedAt?: string;
 }
 
@@ -48,8 +50,8 @@ export default function TransferDetailPage() {
     }
   };
 
-  const handleValidate = async () => {
-    if (!confirm('Are you sure you want to validate this transfer? This will move stock between warehouses.')) {
+  const handleDispatch = async () => {
+    if (!confirm('Are you sure you want to dispatch this transfer? This will decrement stock from the source warehouse.')) {
       return;
     }
 
@@ -59,14 +61,45 @@ export default function TransferDetailPage() {
     try {
       const response = await fetch(`/api/transfers/${transferId}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete' }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to validate transfer');
+        throw new Error(data.error || 'Failed to dispatch transfer');
       }
 
-      router.push('/transfers');
+      fetchTransfer();
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    if (!confirm('Are you sure you want to mark this transfer as received? This will increment stock at your warehouse and complete the transfer.')) {
+      return;
+    }
+
+    setValidating(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/transfers/${transferId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept' }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to mark transfer as received');
+      }
+
+      fetchTransfer();
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -87,7 +120,49 @@ export default function TransferDetailPage() {
   };
 
   const userRole = (session?.user as any)?.role;
-  const canValidate = ['ADMIN', 'MANAGER'].includes(userRole) && transfer?.status !== 'DONE';
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  
+  // Admin or Operator at source warehouse can dispatch
+  const canDispatch = (() => {
+    if (!session || !transfer || loading) return false;
+    if (!['ADMIN', 'OPERATOR'].includes(userRole || '')) return false;
+    if (transfer.status !== 'DRAFT') return false;
+    
+    // Admin can dispatch from any warehouse
+    if (userRole === 'ADMIN') return true;
+    
+    // Operator must be from source warehouse
+    if (!transfer.sourceWarehouseId) return false;
+    const sourceWarehouseIdObj = transfer.sourceWarehouseId;
+    const sourceWarehouseId = (sourceWarehouseIdObj as any)?._id || sourceWarehouseIdObj;
+    const sourceWarehouseIdStr = sourceWarehouseId?.toString ? sourceWarehouseId.toString() : String(sourceWarehouseId);
+    
+    return assignedWarehouses.some((whId: any) => {
+      const whIdStr = whId?.toString ? whId.toString() : String(whId);
+      return whIdStr === sourceWarehouseIdStr;
+    });
+  })();
+  
+  // Admin or Operator at target warehouse can receive
+  const canAccept = (() => {
+    if (!session || !transfer || loading) return false;
+    if (!['ADMIN', 'OPERATOR'].includes(userRole || '')) return false;
+    if (transfer.status !== 'IN_TRANSIT') return false;
+    
+    // Admin can receive at any warehouse
+    if (userRole === 'ADMIN') return true;
+    
+    // Operator must be from target warehouse
+    if (!transfer.targetWarehouseId) return false;
+    const targetWarehouseIdObj = transfer.targetWarehouseId;
+    const targetWarehouseId = (targetWarehouseIdObj as any)?._id || targetWarehouseIdObj;
+    const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+    
+    return assignedWarehouses.some((whId: any) => {
+      const whIdStr = whId?.toString ? whId.toString() : String(whId);
+      return whIdStr === targetWarehouseIdStr;
+    });
+  })();
 
   if (loading) {
     return (
@@ -134,14 +209,24 @@ export default function TransferDetailPage() {
           >
             {transfer.status}
           </span>
-          {canValidate && (
+          {canDispatch && (
             <button
-              onClick={handleValidate}
+              onClick={handleDispatch}
+              disabled={validating}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              {validating ? 'Dispatching...' : 'Dispatch'}
+            </button>
+          )}
+          {canAccept && (
+            <button
+              onClick={handleAccept}
               disabled={validating}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
               <CheckCircle className="w-4 h-4" />
-              {validating ? 'Validating...' : 'Validate'}
+              {validating ? 'Marking as Received...' : 'Mark as Received'}
             </button>
           )}
           <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
@@ -164,7 +249,26 @@ export default function TransferDetailPage() {
               <label className="block text-sm font-medium text-gray-400 mb-1">
                 Requisition
               </label>
-              <p className="text-white">{transfer.requisitionId?.requisitionNumber || '-'}</p>
+              <Link
+                href={`/requisitions/${transfer.requisitionId._id || transfer.requisitionId}`}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                {transfer.requisitionId?.requisitionNumber || transfer.requisitionId}
+              </Link>
+            </div>
+          )}
+
+          {transfer.deliveryId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Delivery
+              </label>
+              <Link
+                href={`/deliveries/${transfer.deliveryId._id || transfer.deliveryId}`}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                {transfer.deliveryId?.deliveryNumber || transfer.deliveryId}
+              </Link>
             </div>
           )}
 
@@ -200,11 +304,20 @@ export default function TransferDetailPage() {
             <p className="text-white">{formatDate(transfer.createdAt)}</p>
           </div>
 
+          {transfer.dispatchedAt && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Dispatched At
+              </label>
+              <p className="text-white">{formatDate(transfer.dispatchedAt)}</p>
+            </div>
+          )}
+
           {transfer.validatedBy && (
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Validated By
+                  Accepted By
                 </label>
                 <p className="text-white">{transfer.validatedBy?.name || '-'}</p>
               </div>

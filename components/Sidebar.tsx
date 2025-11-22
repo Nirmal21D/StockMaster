@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -14,6 +15,7 @@ import {
   History,
   ClipboardList,
   Users,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/lib/authRoles';
@@ -25,13 +27,60 @@ interface NavItem {
   roles: Role[];
 }
 
+const OperatorWarehouseInfo = ({ session }: { session: any }) => {
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const userRole = (session?.user as any)?.role;
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+
+  useEffect(() => {
+    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      const warehousePromises = assignedWarehouses.map((whId: string) =>
+        fetch(`/api/warehouses/${whId}`)
+          .then((res) => res.json())
+          .then((data) => (data && !data.error ? data : null))
+          .catch(() => null)
+      );
+      
+      Promise.all(warehousePromises)
+        .then((warehouses) => {
+          setWarehouses(warehouses.filter((wh) => wh !== null));
+        })
+        .catch((err) => console.error('Failed to fetch warehouses:', err));
+    } else if (userRole === 'MANAGER') {
+      const mainWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+      if (mainWarehouseId) {
+        fetch(`/api/warehouses/${mainWarehouseId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && !data.error) {
+              setWarehouses([data]);
+            }
+          })
+          .catch((err) => console.error('Failed to fetch warehouse:', err));
+      }
+    }
+  }, [userRole, primaryWarehouseId, assignedWarehouses]);
+
+  if (warehouses.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 mt-1">
+      <Warehouse className="w-3 h-3 text-gray-500" />
+      <p className="text-xs text-gray-500 truncate">
+        {warehouses.map((wh) => wh.name).join(', ')}
+      </p>
+    </div>
+  );
+};
+
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Products', href: '/products', icon: Package, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Receipts', href: '/receipts', icon: ArrowDownCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Deliveries', href: '/deliveries', icon: ArrowUpCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
-  { name: 'Transfers', href: '/transfers', icon: Truck, roles: ['ADMIN', 'MANAGER'] },
+  { name: 'Transfers', href: '/transfers', icon: Truck, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Adjustments', href: '/adjustments', icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Move History', href: '/ledger', icon: History, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Users', href: '/admin/users', icon: Users, roles: ['ADMIN'] },
@@ -89,6 +138,9 @@ export function Sidebar() {
             <p className="text-xs text-gray-400 truncate">
               {(session?.user as any)?.role || 'USER'}
             </p>
+            {((session?.user as any)?.role === 'OPERATOR' || (session?.user as any)?.role === 'MANAGER') && (
+              <OperatorWarehouseInfo session={session} />
+            )}
           </div>
         </div>
       </div>

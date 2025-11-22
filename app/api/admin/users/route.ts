@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { requireRole } from '@/lib/middleware';
+import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const role = searchParams.get('role');
+    const warehouseId = searchParams.get('warehouseId');
 
     const query: any = {};
     if (status) {
@@ -20,6 +22,9 @@ export async function GET(request: NextRequest) {
     }
     if (role) {
       query.role = role;
+    }
+    if (warehouseId) {
+      query.assignedWarehouses = new mongoose.Types.ObjectId(warehouseId);
     }
 
     const users = await User.find(query)

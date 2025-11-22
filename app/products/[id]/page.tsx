@@ -73,7 +73,7 @@ export default function ProductDetailPage() {
   };
 
   const userRole = (session?.user as any)?.role;
-  const canEdit = isAdmin(userRole);
+  const canEdit = userRole === 'ADMIN' || userRole === 'MANAGER';
 
   if (loading) {
     return (

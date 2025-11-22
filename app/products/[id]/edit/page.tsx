@@ -22,6 +22,8 @@ export default function EditProductPage() {
     price: '',
     reorderLevel: '0',
     abcClass: '',
+    description: '',
+    isActive: true,
   });
 
   const userRole = (session?.user as any)?.role;
@@ -58,6 +60,8 @@ export default function EditProductPage() {
         price: product.price?.toString() || '',
         reorderLevel: product.reorderLevel?.toString() || '0',
         abcClass: product.abcClass || '',
+        description: product.description || '',
+        isActive: product.isActive !== undefined ? product.isActive : true,
       });
     } catch (err: any) {
       setError(err.message);
@@ -80,6 +84,8 @@ export default function EditProductPage() {
           price: formData.price ? parseFloat(formData.price) : undefined,
           reorderLevel: parseInt(formData.reorderLevel) || 0,
           abcClass: formData.abcClass || undefined,
+          description: formData.description || undefined,
+          isActive: formData.isActive,
         }),
       });
 
@@ -224,6 +230,34 @@ export default function EditProductPage() {
               <option value="B">B - Medium Value</option>
               <option value="C">C - Low Value</option>
             </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter product description..."
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="w-4 h-4 bg-gray-800 border-gray-700 rounded text-blue-600 focus:ring-blue-500"
+              />
+              Active Status
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              {formData.isActive ? 'Product is active and visible' : 'Product is inactive and hidden'}
+            </p>
           </div>
         </div>
 

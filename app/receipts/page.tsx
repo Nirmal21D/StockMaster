@@ -32,12 +32,15 @@ export default function ReceiptsPage() {
   const fetchReceipts = async () => {
     setLoading(true);
     try {
-      const url = search ? `/api/receipts?search=${encodeURIComponent(search)}` : '/api/receipts';
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const url = `/api/receipts${params.toString() ? '?' + params.toString() : ''}`;
       const res = await fetch(url);
       const data = await res.json();
-      setReceipts(data || []);
+      setReceipts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch receipts:', error);
+      setReceipts([]);
     } finally {
       setLoading(false);
     }
@@ -74,7 +77,7 @@ export default function ReceiptsPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search receipts..."
+            placeholder="Search receipts by reference or supplier..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"

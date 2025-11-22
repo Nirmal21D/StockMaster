@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Warehouse } from 'lucide-react';
 import { WarehouseFilter } from './WarehouseFilter';
 
 const pageTitles: Record<string, string> = {
@@ -31,6 +32,42 @@ export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname || '');
+  const [managerWarehouse, setManagerWarehouse] = useState<any>(null);
+  const [operatorWarehouses, setOperatorWarehouses] = useState<any[]>([]);
+
+  const userRole = (session?.user as any)?.role;
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+
+  useEffect(() => {
+    if (userRole === 'MANAGER') {
+      const mainWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+      if (mainWarehouseId) {
+        fetch(`/api/warehouses/${mainWarehouseId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && !data.error) {
+              setManagerWarehouse(data);
+            }
+          })
+          .catch((err) => console.error('Failed to fetch warehouse:', err));
+      }
+    } else if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      // Fetch all assigned warehouses for operator
+      const warehousePromises = assignedWarehouses.map((whId: string) =>
+        fetch(`/api/warehouses/${whId}`)
+          .then((res) => res.json())
+          .then((data) => (data && !data.error ? data : null))
+          .catch(() => null)
+      );
+      
+      Promise.all(warehousePromises)
+        .then((warehouses) => {
+          setOperatorWarehouses(warehouses.filter((wh) => wh !== null));
+        })
+        .catch((err) => console.error('Failed to fetch warehouses:', err));
+    }
+  }, [userRole, primaryWarehouseId, assignedWarehouses]);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -42,6 +79,22 @@ export function TopBar() {
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-semibold text-white">{pageTitle}</h2>
         <WarehouseFilter />
+        {userRole === 'MANAGER' && managerWarehouse && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+            <Warehouse className="w-4 h-4 text-blue-400" />
+            <span className="text-sm text-blue-300 font-medium">
+              Manager of: {managerWarehouse.name}
+            </span>
+          </div>
+        )}
+        {userRole === 'OPERATOR' && operatorWarehouses.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg">
+            <Warehouse className="w-4 h-4 text-green-400" />
+            <span className="text-sm text-green-300 font-medium">
+              Operator at: {operatorWarehouses.map((wh) => wh.name).join(', ')}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
