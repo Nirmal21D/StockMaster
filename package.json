@@ -12,6 +12,8 @@
     "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.30.0",
+    "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
