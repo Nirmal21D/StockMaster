@@ -225,22 +225,22 @@ export default function NewReceiptPage() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="flex flex-col h-full">
       <div className="mb-6">
         <div className="flex items-center space-x-4 mb-4">
           <Link
             href="/receipts"
-            className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Receipts
           </Link>
         </div>
         
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           Add New Receipts
         </h1>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground">
           Choose between manual entry for single receipts or Excel import for bulk operations.
         </p>
       </div>
@@ -257,8 +257,8 @@ export default function NewReceiptPage() {
             }}
             className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
               mode === 'manual'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-lg'
+                : 'bg-card text-muted-foreground hover:bg-muted border border-border'
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -274,8 +274,8 @@ export default function NewReceiptPage() {
             }}
             className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
               mode === 'excel'
-                ? 'bg-green-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-lg'
+                : 'bg-card text-muted-foreground hover:bg-muted border border-border'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -286,21 +286,21 @@ export default function NewReceiptPage() {
 
       {/* Error Display */}
       {error && (
-        <div className="mb-6 bg-red-500/20 border border-red-500 rounded-lg p-4">
-          <p className="text-red-400 font-medium">{error}</p>
+        <div className="mb-6 bg-destructive/20 border border-destructive rounded-lg p-4">
+          <p className="text-destructive font-medium">{error}</p>
         </div>
       )}
 
       {/* Manual Entry Mode */}
       {mode === 'manual' && (
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Receipt Information</h2>
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-border p-6 shadow-lg">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Receipt Information</h2>
           
           <form onSubmit={handleManualSubmit} className="space-y-6">
             {/* Receipt Header */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Receipt Number *
                 </label>
                 <input
@@ -308,13 +308,13 @@ export default function NewReceiptPage() {
                   required
                   value={formData.receiptNumber}
                   onChange={(e) => setFormData({ ...formData, receiptNumber: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Enter receipt number"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Supplier *
                 </label>
                 <input
@@ -322,20 +322,20 @@ export default function NewReceiptPage() {
                   required
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Enter supplier name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Warehouse *
                 </label>
                 <select
                   required
                   value={formData.warehouseId}
                   onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Select warehouse</option>
                   {Array.isArray(warehouses) && warehouses.map((warehouse) => (
@@ -347,7 +347,7 @@ export default function NewReceiptPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Received Date *
                 </label>
                 <input
@@ -355,19 +355,19 @@ export default function NewReceiptPage() {
                   required
                   value={formData.receivedDate}
                   onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Notes
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter any notes or comments"
                 rows={3}
               />
@@ -376,11 +376,11 @@ export default function NewReceiptPage() {
             {/* Receipt Items */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-md font-semibold text-white">Receipt Items</h3>
+                <h3 className="text-md font-semibold text-foreground">Receipt Items</h3>
                 <button
                   type="button"
                   onClick={addItem}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Item</span>
@@ -388,16 +388,16 @@ export default function NewReceiptPage() {
               </div>
 
               {formData.items.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-700 rounded-lg mb-4">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-muted/50 rounded-lg mb-4 border border-border">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Product *
                     </label>
                     <select
                       required
                       value={item.productId}
                       onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">Select product</option>
                       {Array.isArray(products) && products.map((product) => (
@@ -409,7 +409,7 @@ export default function NewReceiptPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Quantity *
                     </label>
                     <input
@@ -418,12 +418,12 @@ export default function NewReceiptPage() {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Unit Price *
                     </label>
                     <input
@@ -433,39 +433,39 @@ export default function NewReceiptPage() {
                       min="0"
                       value={item.unitPrice}
                       onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value))}
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Batch Number
                     </label>
                     <input
                       type="text"
                       value={item.batchNumber}
                       onChange={(e) => updateItem(index, 'batchNumber', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div className="flex items-end space-x-2">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Expiry Date
                       </label>
                       <input
                         type="date"
                         value={item.expiryDate}
                         onChange={(e) => updateItem(index, 'expiryDate', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     {formData.items.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="px-3 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
                       >
                         ×
                       </button>
@@ -478,16 +478,16 @@ export default function NewReceiptPage() {
             <div className="flex justify-end space-x-4">
               <Link
                 href="/receipts"
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-6 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors border border-border"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
-                {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>}
                 <Save className="w-4 h-4" />
                 <span>{loading ? 'Creating...' : 'Create Receipt'}</span>
               </button>
@@ -500,17 +500,17 @@ export default function NewReceiptPage() {
       {mode === 'excel' && (
         <div className="space-y-6">
           {/* Download Template */}
-          <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <Download className="w-5 h-5 text-blue-400 mt-0.5" />
+              <Download className="w-5 h-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-blue-400 font-medium mb-1">Download Template</h3>
-                <p className="text-gray-300 text-sm mb-3">
+                <h3 className="text-primary font-medium mb-1">Download Template</h3>
+                <p className="text-muted-foreground text-sm mb-3">
                   Download the Excel template with the required column format and sample data.
                 </p>
                 <button
                   onClick={downloadTemplate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2 text-sm"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download Receipts Template</span>
@@ -521,8 +521,8 @@ export default function NewReceiptPage() {
 
           {/* Upload Step */}
           {importStep === 'upload' && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Upload Excel File</h2>
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-border p-6 shadow-lg">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Upload Excel File</h2>
               <ExcelDropzone
                 onFileProcessed={handleExcelFileProcessed}
                 onError={handleExcelError}

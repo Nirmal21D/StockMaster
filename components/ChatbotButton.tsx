@@ -31,17 +31,17 @@ export default function ChatbotButton() {
       {/* Floating Chat Button */}
       <button
         onClick={toggleChatbot}
-        className={`fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg transition-all duration-200 z-50 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-300 ${
+        className={`fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg transition-all duration-200 z-50 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-primary/30 ${
           isChatbotOpen
-            ? 'bg-gray-600 hover:bg-gray-700 rotate-45'
-            : 'bg-blue-600 hover:bg-blue-700 hover:scale-110'
+            ? 'bg-muted hover:bg-muted/80 rotate-45'
+            : 'bg-primary hover:bg-primary/90 hover:scale-110'
         }`}
         title={isChatbotOpen ? 'Close chat' : 'Open StockMaster AI'}
       >
         {isChatbotOpen ? (
           // Close icon (X)
           <svg
-            className="w-6 h-6 text-white"
+            className="w-6 h-6 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -57,7 +57,7 @@ export default function ChatbotButton() {
           // Chat icon
           <div className="relative">
             <svg
-              className="w-6 h-6 text-white"
+              className="w-6 h-6 text-primary-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -71,7 +71,7 @@ export default function ChatbotButton() {
             </svg>
             
             {/* Notification dot - optional, you can remove if not needed */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-background animate-pulse"></div>
           </div>
         )}
       </button>

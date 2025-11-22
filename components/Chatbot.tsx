@@ -121,24 +121,24 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-20 right-4 w-80 h-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-[60] animate-in slide-in-from-bottom-2 fade-in-0 duration-200">
+    <div className="fixed bottom-20 right-4 w-96 h-[32rem] bg-card/95 backdrop-blur-xl rounded-lg shadow-2xl border border-border flex flex-col z-[60] animate-in slide-in-from-bottom-2 fade-in-0 duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-600 text-white rounded-t-lg">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 bg-primary-foreground rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
             <h3 className="font-semibold text-sm">StockMaster AI</h3>
-            <p className="text-xs text-blue-100">Inventory Assistant</p>
+            <p className="text-xs text-primary-foreground/70">Inventory Assistant</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={clearChat}
-            className="p-1 hover:bg-blue-700 rounded"
+            className="p-1 hover:bg-primary/80 rounded transition-colors"
             title="Clear chat"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +147,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
           </button>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-blue-700 rounded"
+            className="p-1 hover:bg-primary/80 rounded transition-colors"
             title="Close chat"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,13 +167,13 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             <div
               className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-none'
-                  : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                  : 'bg-muted text-foreground rounded-bl-none'
               }`}
             >
               <p className="whitespace-pre-wrap">{message.content}</p>
               <p className={`text-xs mt-1 ${
-                message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
               }`}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
@@ -183,11 +183,11 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg rounded-bl-none px-3 py-2 text-sm">
+            <div className="bg-muted rounded-lg rounded-bl-none px-3 py-2 text-sm">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border">
         <div className="flex space-x-2">
           <input
             ref={inputRef}
@@ -206,20 +206,20 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about inventory management..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="flex-1 px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm text-foreground placeholder-muted-foreground"
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={isLoading || !inputMessage.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2 text-center">
+        <p className="text-xs text-muted-foreground mt-2 text-center">
           Powered by Gemini AI • Press Enter to send
         </p>
       </div>
