@@ -25,7 +25,16 @@ export default function SignInPage() {
       });
 
       if (result?.error) {
-        setError(result.error === 'CredentialsSignin' ? 'Invalid login credentials' : 'An error occurred. Please try again.');
+        if (result.error.includes('pending approval') || result.error.includes('Account pending')) {
+          // Store email for pending page
+          localStorage.setItem('pendingUserEmail', email);
+          router.push('/auth/pending');
+          return;
+        } else if (result.error.includes('inactive')) {
+          setError('Your account is inactive. Please contact an administrator.');
+        } else {
+          setError(result.error === 'CredentialsSignin' ? 'Invalid login credentials' : result.error || 'An error occurred. Please try again.');
+        }
       } else if (result?.ok) {
         router.push('/dashboard');
         router.refresh();
@@ -96,7 +105,7 @@ export default function SignInPage() {
               Forget Password?
             </a>
             {' | '}
-            <a href="/auth/signup" className="hover:text-blue-400 transition-colors">
+            <a href="/signup" className="hover:text-blue-400 transition-colors">
               Sign Up
             </a>
           </div>

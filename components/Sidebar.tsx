@@ -13,24 +13,41 @@ import {
   Settings,
   History,
   ClipboardList,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Role } from '@/lib/authRoles';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Products', href: '/products', icon: Package },
-  { name: 'Receipts', href: '/receipts', icon: ArrowDownCircle },
-  { name: 'Deliveries', href: '/deliveries', icon: ArrowUpCircle },
-  { name: 'Requisitions', href: '/requisitions', icon: FileText },
-  { name: 'Transfers', href: '/transfers', icon: Truck },
-  { name: 'Adjustments', href: '/adjustments', icon: ClipboardList },
-  { name: 'Move History', href: '/ledger', icon: History },
-  { name: 'Settings', href: '/settings', icon: Settings },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: Role[];
+}
+
+const navigation: NavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Products', href: '/products', icon: Package, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Receipts', href: '/receipts', icon: ArrowDownCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Deliveries', href: '/deliveries', icon: ArrowUpCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Transfers', href: '/transfers', icon: Truck, roles: ['ADMIN', 'MANAGER'] },
+  { name: 'Adjustments', href: '/adjustments', icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Move History', href: '/ledger', icon: History, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Users', href: '/admin/users', icon: Users, roles: ['ADMIN'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role as Role | undefined;
+
+  // Filter navigation based on user role
+  const visibleNavigation = navigation.filter((item) => {
+    if (!userRole) return false;
+    return item.roles.includes(userRole);
+  });
 
   return (
     <div className="w-64 bg-gray-900 border-r border-gray-800 min-h-screen flex flex-col">
@@ -40,7 +57,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        {navigation.map((item) => {
+        {visibleNavigation.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           return (
             <Link

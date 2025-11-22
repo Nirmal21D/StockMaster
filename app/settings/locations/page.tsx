@@ -40,12 +40,8 @@ export default function LocationsPage() {
   const canManage = userRole === 'ADMIN';
 
   useEffect(() => {
-    if (!canManage) {
-      router.push('/settings');
-      return;
-    }
     fetchData();
-  }, [canManage]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -112,9 +108,6 @@ export default function LocationsPage() {
     }
   };
 
-  if (!canManage) {
-    return null;
-  }
 
   return (
     <div className="space-y-6">
@@ -141,7 +134,13 @@ export default function LocationsPage() {
         </button>
       </div>
 
-      {showForm && (
+      {!canManage && (
+        <div className="p-4 bg-yellow-500/20 border border-yellow-500 rounded-lg text-yellow-400">
+          You don't have permission to manage locations. Only administrators can create, edit, or delete locations.
+        </div>
+      )}
+
+      {showForm && canManage && (
         <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
           <h2 className="text-xl font-semibold text-white mb-4">
             {editingLocation ? 'Edit Location' : 'New Location'}
@@ -251,20 +250,25 @@ export default function LocationsPage() {
                     {(location.warehouseId as any)?.name || '-'}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(location)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(location._id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {canManage && (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(location)}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(location._id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    {!canManage && (
+                      <span className="text-gray-500 text-sm">View only</span>
+                    )}
                   </td>
                 </tr>
               ))}

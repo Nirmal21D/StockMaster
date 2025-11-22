@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,36 +41,55 @@ function KPICard({ title, value, icon, href, color }: KPICardProps) {
 }
 
 export default function DashboardClient({ initialData }: { initialData: DashboardData }) {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<DashboardData>(initialData);
   const [loading, setLoading] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
 
+  // Get warehouse ID from URL params - memoized to prevent unnecessary re-renders
+  const warehouseId = useMemo(() => {
+    return searchParams.get('warehouse') || '';
+  }, [searchParams]);
+
+  // Fetch dashboard data only when warehouseId changes
   useEffect(() => {
-    if (selectedWarehouse) {
-      setLoading(true);
-      fetch(`/api/dashboard?warehouseId=${selectedWarehouse}`)
-        .then((res) => res.json())
-        .then((newData) => {
+    // If no warehouse selected, use initial data
+    if (!warehouseId) {
+      setData(initialData);
+      return;
+    }
+
+    // Fetch data for selected warehouse
+    let cancelled = false;
+    setLoading(true);
+
+    fetch(`/api/dashboard?warehouseId=${warehouseId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch dashboard data');
+        return res.json();
+      })
+      .then((newData) => {
+        if (!cancelled) {
           setData(newData);
           setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [selectedWarehouse]);
+        }
+      })
+      .catch((error) => {
+        console.error('Dashboard fetch error:', error);
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [warehouseId, initialData]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <select
-          value={selectedWarehouse}
-          onChange={(e) => setSelectedWarehouse(e.target.value)}
-          className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-        >
-          <option value="">All Warehouses</option>
-          {/* Warehouse options will be loaded dynamically */}
-        </select>
-      </div>
+      {loading && (
+        <div className="text-center text-gray-400 py-4">Loading dashboard data...</div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <KPICard

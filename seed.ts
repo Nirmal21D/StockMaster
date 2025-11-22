@@ -35,7 +35,9 @@ async function seed() {
         email: 'admin@stockmaster.com',
         password: hashedPassword,
         role: 'ADMIN',
+        status: 'ACTIVE',
         isActive: true,
+        assignedWarehouses: [],
       },
       { upsert: true, new: true }
     );
@@ -47,7 +49,9 @@ async function seed() {
         email: 'operator@stockmaster.com',
         password: hashedPassword,
         role: 'OPERATOR',
+        status: 'ACTIVE',
         isActive: true,
+        assignedWarehouses: [],
       },
       { upsert: true, new: true }
     );
@@ -59,7 +63,9 @@ async function seed() {
         email: 'manager@stockmaster.com',
         password: hashedPassword,
         role: 'MANAGER',
+        status: 'ACTIVE',
         isActive: true,
+        assignedWarehouses: [],
       },
       { upsert: true, new: true }
     );

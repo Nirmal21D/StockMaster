@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx seed.ts",
-    "test-db": "tsx scripts/test-connection.ts"
+    "test-db": "tsx scripts/test-connection.ts",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
