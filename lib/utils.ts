@@ -5,30 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(date: string | Date): string {
-  const d = new Date(date);
-  return new Intl.DateTimeFormat('en-US', {
+export function formatDate(dateString: string | Date): string {
+  if (!dateString) return '-';
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  if (isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: '2-digit',
+    day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
-  }).format(d);
+    minute: '2-digit',
+  });
 }
 
-export function generateReferenceNumber(...parts: (string | number)[]): string {
-  if (parts.length === 0) {
-    parts = ['REF'];
-  }
-  
-  // Convert all parts to strings and filter out empty ones
-  const stringParts = parts.map(part => String(part)).filter(Boolean);
-  
-  // If the last part is a number, pad it with zeros
-  const lastPart = stringParts[stringParts.length - 1];
-  if (!isNaN(Number(lastPart))) {
-    stringParts[stringParts.length - 1] = String(lastPart).padStart(6, '0');
-  }
-  
-  return stringParts.join('-');
+export function generateReferenceNumber(
+  prefix: string,
+  warehouseCode: string,
+  direction: string,
+  count: number
+): string {
+  return `${prefix}-${warehouseCode}-${direction}-${String(count).padStart(4, '0')}`;
 }

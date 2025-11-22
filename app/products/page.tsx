@@ -15,6 +15,7 @@ interface Product {
   price?: number;
   reorderLevel: number;
   abcClass?: string;
+  totalQuantity?: number;
 }
 
 export default function ProductsPage() {
@@ -51,16 +52,7 @@ export default function ProductsPage() {
       const url = search ? `/api/products?search=${encodeURIComponent(search)}` : '/api/products';
       const res = await fetch(url);
       const data = await res.json();
-      
-      // Handle both success and error responses
-      if (data && Array.isArray(data.products)) {
-        setProducts(data.products);
-      } else if (data && data.error) {
-        console.error('API Error:', data.error);
-        setProducts([]);
-      } else {
-        setProducts([]);
-      }
+      setProducts(Array.isArray(data.products) ? data.products : Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       setProducts([]);
@@ -158,6 +150,9 @@ export default function ProductsPage() {
                   Unit
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Total Quantity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Reorder Level
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -182,6 +177,11 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {product.unit}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <span className={product.totalQuantity !== undefined && product.totalQuantity < product.reorderLevel ? 'text-red-400' : 'text-white'}>
+                      {product.totalQuantity !== undefined ? `${product.totalQuantity} ${product.unit}` : '-'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {product.reorderLevel}

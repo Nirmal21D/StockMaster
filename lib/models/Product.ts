@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   price?: number;
   reorderLevel: number;
   abcClass?: 'A' | 'B' | 'C';
+  description?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -23,6 +24,7 @@ const ProductSchema = new Schema<IProduct>(
     price: { type: Number },
     reorderLevel: { type: Number, required: true, default: 0 },
     abcClass: { type: String, enum: ['A', 'B', 'C'] },
+    description: { type: String },
     isActive: { type: Boolean, default: true },
   },
   {

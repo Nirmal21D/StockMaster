@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
 
 interface Requisition {
   _id: string;
@@ -14,24 +15,77 @@ interface Requisition {
   createdBy: any;
 }
 
+type ViewType = 'all' | 'sent' | 'received';
+
 export default function RequisitionsPage() {
+  const { data: session } = useSession();
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
+  const [allRequisitions, setAllRequisitions] = useState<Requisition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewType, setViewType] = useState<ViewType>('all');
 
   useEffect(() => {
     fetchRequisitions();
   }, []);
+
+  useEffect(() => {
+    filterRequisitions();
+  }, [viewType, allRequisitions, session]);
+
+  const userRole = (session?.user as any)?.role;
+  const canCreate = userRole === 'MANAGER';
+  const userId = (session?.user as any)?.id;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const managerWarehouseIds = primaryWarehouseId 
+    ? [primaryWarehouseId, ...assignedWarehouses]
+    : assignedWarehouses;
 
   const fetchRequisitions = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/requisitions');
       const data = await res.json();
-      setRequisitions(data || []);
+      const reqs = Array.isArray(data) ? data : [];
+      setAllRequisitions(reqs);
+      setRequisitions(reqs);
     } catch (error) {
       console.error('Failed to fetch requisitions:', error);
+      setAllRequisitions([]);
+      setRequisitions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const filterRequisitions = () => {
+    if (userRole !== 'MANAGER' || viewType === 'all') {
+      setRequisitions(allRequisitions);
+      return;
+    }
+
+    if (viewType === 'sent') {
+      // Requisitions created by this manager
+      const sent = allRequisitions.filter((req) => {
+        const createdById = req.createdBy?._id || req.createdBy;
+        return createdById?.toString() === userId?.toString();
+      });
+      setRequisitions(sent);
+    } else if (viewType === 'received') {
+      // Requisitions where this manager can approve (not from their warehouse)
+      const received = allRequisitions.filter((req) => {
+        const requestingWarehouseId = req.requestingWarehouseId?._id || req.requestingWarehouseId;
+        const requestingWarehouseIdStr = requestingWarehouseId?.toString ? requestingWarehouseId.toString() : String(requestingWarehouseId);
+        
+        // Received = requisitions NOT from this manager's warehouse (they can approve these)
+        const isFromMyWarehouse = managerWarehouseIds.some((whId: any) => {
+          const whIdStr = whId?.toString ? whId.toString() : String(whId);
+          return whIdStr === requestingWarehouseIdStr;
+        });
+        
+        return !isFromMyWarehouse;
+      });
+      setRequisitions(received);
     }
   };
 
@@ -51,15 +105,64 @@ export default function RequisitionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Requisitions</h1>
-        <Link
-          href="/requisitions/new"
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
-        >
-          <Plus className="w-5 h-5" />
-          New Requisition
-        </Link>
+        <h1 className="text-3xl font-bold text-white">Requisitions</h1>
+        {canCreate && (
+          <Link
+            href="/requisitions/new"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            New Requisition
+          </Link>
+        )}
       </div>
+
+      {/* Tabs for Managers */}
+      {userRole === 'MANAGER' && (
+        <div className="flex gap-2 border-b border-gray-800">
+          <button
+            onClick={() => setViewType('all')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'all'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setViewType('sent')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'sent'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Sent ({allRequisitions.filter((req) => {
+              const createdById = req.createdBy?._id || req.createdBy;
+              return createdById?.toString() === userId?.toString();
+            }).length})
+          </button>
+          <button
+            onClick={() => setViewType('received')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'received'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Received ({allRequisitions.filter((req) => {
+              const requestingWarehouseId = req.requestingWarehouseId?._id || req.requestingWarehouseId;
+              const requestingWarehouseIdStr = requestingWarehouseId?.toString ? requestingWarehouseId.toString() : String(requestingWarehouseId);
+              const isFromMyWarehouse = managerWarehouseIds.some((whId: any) => {
+                const whIdStr = whId?.toString ? whId.toString() : String(whId);
+                return whIdStr === requestingWarehouseIdStr;
+              });
+              return !isFromMyWarehouse;
+            }).length})
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Loading requisitions...</div>
@@ -87,9 +190,20 @@ export default function RequisitionsPage() {
             </thead>
             <tbody className="divide-y divide-black/5 dark:divide-white/5">
               {requisitions.map((req) => (
-                <tr key={req._id} className="hover:bg-muted/30 transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                    {req.requisitionNumber}
+                <tr key={req._id} className="hover:bg-gray-800/50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                    <div className="flex items-center gap-2">
+                      {req.requisitionNumber}
+                      {(req.status === 'APPROVED' || req.status === 'REJECTED') && (
+                        <span
+                          className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getStatusColor(
+                            req.status
+                          )}`}
+                        >
+                          {req.status === 'APPROVED' ? '✓ Approved' : '✗ Rejected'}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {req.requestingWarehouseId?.name || '-'}

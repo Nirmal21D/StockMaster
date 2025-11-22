@@ -51,8 +51,8 @@ export default function LocationsPage() {
       ]);
       const locationsData = await locationsRes.json();
       const warehousesData = await warehousesRes.json();
-      setLocations(locationsData || []);
-      setWarehouses(warehousesData || []);
+      setLocations(Array.isArray(locationsData) ? locationsData : []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {

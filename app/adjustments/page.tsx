@@ -33,9 +33,10 @@ export default function AdjustmentsPage() {
     try {
       const res = await fetch('/api/adjustments');
       const data = await res.json();
-      setAdjustments(data || []);
+      setAdjustments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch adjustments:', error);
+      setAdjustments([]);
     } finally {
       setLoading(false);
     }

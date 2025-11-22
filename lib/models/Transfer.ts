@@ -11,6 +11,7 @@ export interface ITransfer extends Document {
   _id: string;
   transferNumber: string;
   requisitionId?: mongoose.Types.ObjectId;
+  deliveryId?: mongoose.Types.ObjectId; // Link to delivery
   sourceWarehouseId: mongoose.Types.ObjectId;
   targetWarehouseId: mongoose.Types.ObjectId;
   status: 'DRAFT' | 'IN_TRANSIT' | 'DONE';
@@ -50,6 +51,10 @@ const TransferSchema = new Schema<ITransfer>(
       type: Schema.Types.ObjectId,
       ref: 'Requisition',
     },
+    deliveryId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Delivery',
+    },
     sourceWarehouseId: {
       type: Schema.Types.ObjectId,
       ref: 'Warehouse',
@@ -87,6 +92,7 @@ TransferSchema.index({ sourceWarehouseId: 1 });
 TransferSchema.index({ targetWarehouseId: 1 });
 TransferSchema.index({ status: 1 });
 TransferSchema.index({ requisitionId: 1 });
+TransferSchema.index({ deliveryId: 1 });
 
 const Transfer: Model<ITransfer> =
   mongoose.models.Transfer || mongoose.model<ITransfer>('Transfer', TransferSchema);

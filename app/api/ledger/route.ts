@@ -22,15 +22,24 @@ export async function GET(request: NextRequest) {
 
     const query: any = {};
 
-    if (productId) {
-      query.productId = new mongoose.Types.ObjectId(productId);
-    }
-
-    if (warehouseId) {
+    // For Operators, filter by assigned warehouses
+    const userRole = (session.user as any)?.role;
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      const warehouseIds = assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id));
+      query.$or = [
+        { warehouseFromId: { $in: warehouseIds } },
+        { warehouseToId: { $in: warehouseIds } },
+      ];
+    } else if (warehouseId) {
       query.$or = [
         { warehouseFromId: new mongoose.Types.ObjectId(warehouseId) },
         { warehouseToId: new mongoose.Types.ObjectId(warehouseId) },
       ];
+    }
+
+    if (productId) {
+      query.productId = new mongoose.Types.ObjectId(productId);
     }
 
     if (type) {

@@ -16,15 +16,29 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
     const status = searchParams.get('status');
+    const search = searchParams.get('search');
 
     const query: any = {};
 
-    if (warehouseId) {
+    // For Operators, filter by assigned warehouses
+    const userRole = (session.user as any)?.role;
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+      query.warehouseId = { $in: assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id)) };
+    } else if (warehouseId) {
       query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
     }
 
     if (status) {
       query.status = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { receiptNumber: { $regex: search, $options: 'i' } },
+        { supplierName: { $regex: search, $options: 'i' } },
+        { reference: { $regex: search, $options: 'i' } },
+      ];
     }
 
     const receipts = await Receipt.find(query)
@@ -58,6 +72,15 @@ export async function POST(request: NextRequest) {
 
     if (!warehouseId || !lines || lines.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // For Operators, verify they have access to this warehouse
+    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && !assignedWarehouses.includes(warehouseId)) {
+      return NextResponse.json(
+        { error: 'You do not have access to this warehouse' },
+        { status: 403 }
+      );
     }
 
     const warehouse = await Warehouse.findById(warehouseId);

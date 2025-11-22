@@ -9,25 +9,39 @@ import { useSession } from 'next-auth/react';
 interface Delivery {
   _id: string;
   deliveryNumber: string;
-  customerName?: string;
-  warehouseId: any;
+  warehouseId: any; // Source warehouse
+  targetWarehouseId?: any; // Target warehouse
   status: string;
   createdAt: string;
   createdBy: any;
 }
 
+type ViewType = 'all' | 'sent' | 'received';
+
 export default function DeliveriesPage() {
   const { data: session } = useSession();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [allDeliveries, setAllDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [viewType, setViewType] = useState<ViewType>('all');
 
   const userRole = (session?.user as any)?.role;
-  const canCreate = ['ADMIN', 'OPERATOR'].includes(userRole);
+  const canCreate = userRole === 'MANAGER'; // Only Managers can create deliveries
+  const userId = (session?.user as any)?.id;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const managerWarehouseIds = primaryWarehouseId 
+    ? [primaryWarehouseId, ...assignedWarehouses]
+    : assignedWarehouses;
 
   useEffect(() => {
     fetchDeliveries();
   }, [search]);
+
+  useEffect(() => {
+    filterDeliveries();
+  }, [viewType, allDeliveries, session]);
 
   const fetchDeliveries = async () => {
     setLoading(true);
@@ -37,11 +51,54 @@ export default function DeliveriesPage() {
         : '/api/deliveries';
       const res = await fetch(url);
       const data = await res.json();
-      setDeliveries(data || []);
+      const dels = Array.isArray(data) ? data : [];
+      setAllDeliveries(dels);
+      setDeliveries(dels);
     } catch (error) {
       console.error('Failed to fetch deliveries:', error);
+      setAllDeliveries([]);
+      setDeliveries([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const filterDeliveries = () => {
+    if (userRole !== 'MANAGER' || viewType === 'all') {
+      setDeliveries(allDeliveries);
+      return;
+    }
+
+    if (viewType === 'sent') {
+      // Deliveries where this manager's warehouse is the source (warehouseId)
+      const sent = allDeliveries.filter((del) => {
+        const sourceWarehouseId = del.warehouseId?._id || del.warehouseId;
+        const sourceWarehouseIdStr = sourceWarehouseId?.toString ? sourceWarehouseId.toString() : String(sourceWarehouseId);
+        
+        const isFromMyWarehouse = managerWarehouseIds.some((whId: any) => {
+          const whIdStr = whId?.toString ? whId.toString() : String(whId);
+          return whIdStr === sourceWarehouseIdStr;
+        });
+        
+        return isFromMyWarehouse;
+      });
+      setDeliveries(sent);
+    } else if (viewType === 'received') {
+      // Deliveries where this manager's warehouse is the target (targetWarehouseId)
+      const received = allDeliveries.filter((del) => {
+        const targetWarehouseId = del.targetWarehouseId?._id || del.targetWarehouseId;
+        if (!targetWarehouseId) return false;
+        
+        const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+        
+        const isToMyWarehouse = managerWarehouseIds.some((whId: any) => {
+          const whIdStr = whId?.toString ? whId.toString() : String(whId);
+          return whIdStr === targetWarehouseIdStr;
+        });
+        
+        return isToMyWarehouse;
+      });
+      setDeliveries(received);
     }
   };
 
@@ -53,6 +110,8 @@ export default function DeliveriesPage() {
         return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
       case 'WAITING':
         return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+      case 'REJECTED':
+        return 'bg-red-500/20 text-red-400 border-red-500/50';
       default:
         return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
     }
@@ -73,12 +132,63 @@ export default function DeliveriesPage() {
         )}
       </div>
 
+      {/* Tabs for Managers */}
+      {userRole === 'MANAGER' && (
+        <div className="flex gap-2 border-b border-gray-800">
+          <button
+            onClick={() => setViewType('all')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'all'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setViewType('sent')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'sent'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Sent ({allDeliveries.filter((del) => {
+              const sourceWarehouseId = del.warehouseId?._id || del.warehouseId;
+              const sourceWarehouseIdStr = sourceWarehouseId?.toString ? sourceWarehouseId.toString() : String(sourceWarehouseId);
+              return managerWarehouseIds.some((whId: any) => {
+                const whIdStr = whId?.toString ? whId.toString() : String(whId);
+                return whIdStr === sourceWarehouseIdStr;
+              });
+            }).length})
+          </button>
+          <button
+            onClick={() => setViewType('received')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              viewType === 'received'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Received ({allDeliveries.filter((del) => {
+              const targetWarehouseId = del.targetWarehouseId?._id || del.targetWarehouseId;
+              if (!targetWarehouseId) return false;
+              const targetWarehouseIdStr = targetWarehouseId?.toString ? targetWarehouseId.toString() : String(targetWarehouseId);
+              return managerWarehouseIds.some((whId: any) => {
+                const whIdStr = whId?.toString ? whId.toString() : String(whId);
+                return whIdStr === targetWarehouseIdStr;
+              });
+            }).length})
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search deliveries by reference or contact..."
+            placeholder="Search deliveries by reference or number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -97,13 +207,13 @@ export default function DeliveriesPage() {
                   Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  From
+                  From Warehouse
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Contact
+                  To Warehouse
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Schedule Date
+                  Created
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Status
@@ -119,11 +229,11 @@ export default function DeliveriesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {delivery.deliveryNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                    {delivery.warehouseId?.code || delivery.warehouseId?.name || '-'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {delivery.warehouseId?.name || delivery.warehouseId?.code || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                    {delivery.customerName || 'vendor'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {delivery.targetWarehouseId?.name || delivery.targetWarehouseId?.code || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(delivery.createdAt)}

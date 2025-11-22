@@ -38,8 +38,8 @@ export default function SettingsPage() {
       ]);
       const warehousesData = await warehousesRes.json();
       const locationsData = await locationsRes.json();
-      setWarehouses(warehousesData || []);
-      setLocations(locationsData || []);
+      setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
+      setLocations(Array.isArray(locationsData) ? locationsData : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {

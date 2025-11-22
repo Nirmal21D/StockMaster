@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown, Settings, Users, Warehouse } from 'lucide-react';
 import Link from 'next/link';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
@@ -64,8 +65,30 @@ function KPICard({ title, value, icon, href, description, trend }: KPICardProps)
 
 export default function DashboardClient({ initialData }: { initialData: DashboardData }) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [data, setData] = useState<DashboardData>(initialData);
   const [loading, setLoading] = useState(false);
+  const [managerWarehouse, setManagerWarehouse] = useState<any>(null);
+  
+  const userRole = (session?.user as any)?.role;
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+
+  useEffect(() => {
+    if (userRole === 'MANAGER') {
+      const mainWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+      if (mainWarehouseId) {
+        fetch(`/api/warehouses/${mainWarehouseId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && !data.error) {
+              setManagerWarehouse(data);
+            }
+          })
+          .catch((err) => console.error('Failed to fetch warehouse:', err));
+      }
+    }
+  }, [userRole, primaryWarehouseId, assignedWarehouses]);
 
   // Get warehouse ID from URL params - memoized to prevent unnecessary re-renders
   const warehouseId = useMemo(() => {
@@ -113,7 +136,16 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
         <div className="text-center text-muted-foreground py-4">Loading dashboard data...</div>
       )}
 
-      {/* KPI Cards */}
+      {userRole === 'MANAGER' && managerWarehouse && (
+        <div className="bg-blue-500/20 border border-blue-500/50 rounded-xl p-4 flex items-center gap-3">
+          <Package className="w-5 h-5 text-blue-400" />
+          <div>
+            <p className="text-sm text-blue-300 font-medium">Your Center</p>
+            <p className="text-lg text-white font-semibold">{managerWarehouse.name} ({managerWarehouse.code})</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <KPICard
           title="Total SKUs"
@@ -159,8 +191,116 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
         />
       </div>
 
-      {/* Analytics Dashboard */}
-      <AnalyticsDashboard warehouseId={warehouseId} />
+      {/* Role-specific Quick Links */}
+      <div className="mt-8 bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {userRole === 'ADMIN' && (
+            <>
+              <Link
+                href="/admin/users"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Users className="w-5 h-5 text-blue-400" />
+                <div>
+                  <div className="text-white font-medium">Manage Users</div>
+                  <div className="text-sm text-gray-400">Approve and manage user accounts</div>
+                </div>
+              </Link>
+              <Link
+                href="/settings/warehouses"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Warehouse className="w-5 h-5 text-blue-400" />
+                <div>
+                  <div className="text-white font-medium">Manage Warehouses</div>
+                  <div className="text-sm text-gray-400">Create and configure warehouses</div>
+                </div>
+              </Link>
+              <Link
+                href="/products/new"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Package className="w-5 h-5 text-blue-400" />
+                <div>
+                  <div className="text-white font-medium">Add Product</div>
+                  <div className="text-sm text-gray-400">Create new product master data</div>
+                </div>
+              </Link>
+            </>
+          )}
+          
+          {userRole === 'MANAGER' && (
+            <>
+              <Link
+                href="/requisitions?status=SUBMITTED"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FileText className="w-5 h-5 text-yellow-400" />
+                <div>
+                  <div className="text-white font-medium">Approve Requisitions</div>
+                  <div className="text-sm text-gray-400">Review and approve stock requests</div>
+                </div>
+              </Link>
+              <Link
+                href="/transfers?status=DRAFT"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Truck className="w-5 h-5 text-purple-400" />
+                <div>
+                  <div className="text-white font-medium">Validate Transfers</div>
+                  <div className="text-sm text-gray-400">Validate inter-warehouse transfers</div>
+                </div>
+              </Link>
+              <Link
+                href="/products/new"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Package className="w-5 h-5 text-blue-400" />
+                <div>
+                  <div className="text-white font-medium">Add Product</div>
+                  <div className="text-sm text-gray-400">Create new product master data</div>
+                </div>
+              </Link>
+            </>
+          )}
+          
+          {userRole === 'OPERATOR' && (
+            <>
+              <Link
+                href="/receipts/new"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Package className="w-5 h-5 text-green-400" />
+                <div>
+                  <div className="text-white font-medium">New Receipt</div>
+                  <div className="text-sm text-gray-400">Record incoming stock</div>
+                </div>
+              </Link>
+              <Link
+                href="/deliveries/new"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Truck className="w-5 h-5 text-red-400" />
+                <div>
+                  <div className="text-white font-medium">New Delivery</div>
+                  <div className="text-sm text-gray-400">Record outgoing stock</div>
+                </div>
+              </Link>
+              <Link
+                href="/requisitions/new"
+                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FileText className="w-5 h-5 text-yellow-400" />
+                <div>
+                  <div className="text-white font-medium">New Requisition</div>
+                  <div className="text-sm text-gray-400">Request stock from other warehouses</div>
+                </div>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
