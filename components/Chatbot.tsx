@@ -219,9 +219,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             </svg>
           </button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Powered by Gemini AI • Press Enter to send
-        </p>
+    
       </div>
     </div>
   );

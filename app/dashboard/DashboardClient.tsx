@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 interface DashboardData {
   totalSKUs: number;
@@ -109,9 +110,10 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
   return (
     <div className="space-y-6">
       {loading && (
-        <div className="text-center text-gray-400 py-4">Loading dashboard data...</div>
+        <div className="text-center text-muted-foreground py-4">Loading dashboard data...</div>
       )}
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <KPICard
           title="Total SKUs"
@@ -156,6 +158,9 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
           description="Zero-stock occurrences last month"
         />
       </div>
+
+      {/* Analytics Dashboard */}
+      <AnalyticsDashboard warehouseId={warehouseId} />
     </div>
   );
 }

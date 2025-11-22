@@ -65,10 +65,10 @@ export default function ExcelDropzone({
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200
           ${
             isDragActive && !isDragReject
-              ? 'border-blue-400 bg-blue-50 text-blue-600'
+              ? 'border-primary bg-primary/10 text-primary'
               : isDragReject
-              ? 'border-red-400 bg-red-50 text-red-600'
-              : 'border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-400 hover:bg-gray-100'
+              ? 'border-destructive bg-destructive/10 text-destructive'
+              : 'border-border bg-background text-muted-foreground hover:border-border/80 hover:bg-muted/50'
           }
           ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}
         `}
@@ -78,12 +78,12 @@ export default function ExcelDropzone({
         <div className="space-y-4">
           {isProcessing ? (
             <div className="flex flex-col items-center space-y-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="text-sm font-medium">Processing {fileName}...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-sm font-medium text-foreground">Processing {fileName}...</p>
             </div>
           ) : (
             <>
-              <div className="mx-auto w-16 h-16 text-gray-400">
+              <div className="mx-auto w-16 h-16 text-muted-foreground">
                 <svg fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                 </svg>
@@ -95,10 +95,10 @@ export default function ExcelDropzone({
                 </p>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-lg font-medium">
+                  <p className="text-lg font-medium text-foreground">
                     Drop Excel file here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Supports .xlsx and .xls files (max {Math.round(maxSize / 1024 / 1024)}MB)
                   </p>
                 </div>
@@ -112,9 +112,9 @@ export default function ExcelDropzone({
       {fileRejections.length > 0 && (
         <div className="mt-4">
           {fileRejections.map(({ file, errors }) => (
-            <div key={file.name} className="bg-red-50 border border-red-200 rounded p-3">
-              <p className="font-medium text-red-800">{file.name}</p>
-              <ul className="list-disc list-inside text-sm text-red-600 mt-1">
+            <div key={file.name} className="bg-destructive/10 border border-destructive/20 rounded p-3">
+              <p className="font-medium text-destructive">{file.name}</p>
+              <ul className="list-disc list-inside text-sm text-destructive/80 mt-1">
                 {errors.map((error) => (
                   <li key={error.code}>{error.message}</li>
                 ))}
@@ -126,8 +126,8 @@ export default function ExcelDropzone({
 
       {/* Success Message */}
       {fileName && !isProcessing && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded p-3">
-          <p className="text-green-800 font-medium">✅ File uploaded successfully: {fileName}</p>
+        <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded p-3">
+          <p className="text-green-600 dark:text-green-400 font-medium">✅ File uploaded successfully: {fileName}</p>
         </div>
       )}
     </div>
