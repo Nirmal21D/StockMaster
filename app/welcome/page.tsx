@@ -11,11 +11,16 @@ export default function WelcomePage() {
 
   useEffect(() => {
     const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024)
+      if (typeof window !== 'undefined') {
+        setIsDesktop(window.innerWidth >= 1024)
+      }
     }
     checkDesktop()
-    window.addEventListener('resize', checkDesktop)
-    return () => window.removeEventListener('resize', checkDesktop)
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', checkDesktop)
+      return () => window.removeEventListener('resize', checkDesktop)
+    }
   }, [])
 
   useEffect(() => {
@@ -52,7 +57,7 @@ export default function WelcomePage() {
         animate={{ 
           opacity: [1, 1, 0],
           scale: [1, 1, 0.8],
-          y: [0, 0, -window.innerHeight],
+          y: [0, 0, -1000],
         }}
         transition={{
           duration: 2.8,

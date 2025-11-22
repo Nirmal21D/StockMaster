@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FloatingNav } from '@/components/FloatingNav'
 import { HeroSection } from '@/components/landing/HeroSection'
@@ -11,7 +11,7 @@ import { Footer } from '@/components/landing/Footer'
 import { SmoothCursor } from '@/components/ui/smooth-cursor'
 import { Home, Smartphone, Sparkles, GitBranch } from 'lucide-react'
 
-export default function LandingPage() {
+function LandingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const hasRedirected = useRef(false)
@@ -113,5 +113,17 @@ export default function LandingPage() {
         <Footer />
       </div>
     </>
+  )
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <LandingPageContent />
+    </Suspense>
   )
 }
