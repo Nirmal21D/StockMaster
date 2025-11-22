@@ -1,0 +1,89 @@
+"use client"
+import React, { useRef, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FloatingNav } from '@/components/FloatingNav'
+import { HeroSection } from '@/components/landing/HeroSection'
+import { KPISection } from '@/components/landing/KPISection'
+import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { ProcessFlowSection } from '@/components/landing/ProcessFlowSection'
+import { CTASection } from '@/components/landing/CTASection'
+import { Footer } from '@/components/landing/Footer'
+import { Home, ListChecks, Smartphone } from 'lucide-react'
+
+export default function LandingPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const hasRedirected = useRef(false)
+  const [showContent, setShowContent] = useState(false)
+
+  // Create refs for smooth scrolling to sections
+  const sectionRefs = {
+    features: useRef<HTMLElement>(null),
+    'how-it-works': useRef<HTMLElement>(null),
+  }
+
+  // Redirect all visitors to the welcome page on every visit
+  useEffect(() => {
+    if (hasRedirected.current) return
+    hasRedirected.current = true
+    
+    try {
+      const skipWelcome = searchParams?.get('skipWelcome') === '1' || searchParams?.get('skipWelcome') === 'true'
+      // Always redirect to welcome unless explicitly skipped
+      if (!skipWelcome) {
+        router.replace('/welcome')
+      } else {
+        // Show content immediately without loading state
+        setShowContent(true)
+        // Clean up the URL after showing content
+        setTimeout(() => {
+          window.history.replaceState({}, '', '/landing')
+        }, 100)
+      }
+    } catch (e) {
+      // ignore (server render or error)
+      setShowContent(true)
+    }
+  }, [router, searchParams])
+
+  // Don't render content until we've decided whether to redirect
+  if (!showContent) {
+    return null
+  }
+
+  return (
+    <>
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .fade-in {
+          animation: fadeIn 0.5s ease-out;
+        }
+      `}</style>
+      
+      <div className="min-h-screen bg-background fade-in">
+        <FloatingNav
+          navItems={[
+            { name: 'Home', link: '/landing', icon: <Home className="h-4 w-4" /> },
+            { name: 'Features', link: '#features', icon: <ListChecks className="h-4 w-4" /> },
+            { name: 'How It Works', link: '#how-it-works', icon: <ListChecks className="h-4 w-4" /> },
+            { name: 'Roles', link: '/roles', icon: <ListChecks className="h-4 w-4" /> },
+            { name: 'Get Started', link: '/auth/signin', icon: <Smartphone className="h-4 w-4" /> },
+          ]}
+          hideOnScroll
+          threshold={10}
+          sectionRefs={sectionRefs}
+        />
+
+        <HeroSection />
+        <KPISection />
+        <FeaturesSection />
+        <ProcessFlowSection />
+        <CTASection />
+        <Footer />
+      </div>
+    </>
+  )
+}

@@ -8,7 +8,7 @@ export default async function Home() {
   if (session) {
     redirect('/dashboard');
   } else {
-    redirect('/auth/signin');
+    redirect('/landing');
   }
 }
 
