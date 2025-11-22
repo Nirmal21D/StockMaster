@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Product from '@/lib/models/Product';
-import { requireAuth } from '@/lib/middleware';
+import { requireAuth, requireRole } from '@/lib/middleware';
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
+    const session = await requireRole(request, ['ADMIN', 'MANAGER']);
     if (session instanceof NextResponse) return session;
 
     await connectDB();

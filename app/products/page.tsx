@@ -23,7 +23,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
 
   const userRole = (session?.user as any)?.role;
-  const canCreate = userRole === 'ADMIN';
+  const canCreate = userRole === 'ADMIN' || userRole === 'MANAGER';
 
   useEffect(() => {
     fetchProducts();
@@ -40,6 +40,26 @@ export default function ProductsPage() {
       console.error('Failed to fetch products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete product');
+      }
+
+      // Refresh the product list
+      fetchProducts();
+    } catch (error: any) {
+      alert(error.message);
     }
   };
 
@@ -127,15 +147,26 @@ export default function ProductsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {canCreate && (
-                      <Link
-                        href={`/products/${product._id}/edit`}
-                        className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Edit
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-3 justify-end">
+                      {canCreate && (
+                        <Link
+                          href={`/products/${product._id}/edit`}
+                          className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </Link>
+                      )}
+                      {canCreate && (
+                        <button
+                          onClick={() => handleDelete(product._id)}
+                          className="inline-flex items-center gap-1 text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

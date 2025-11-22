@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate warehouse assignment for operators and managers
+    if (role && (role === 'OPERATOR' || role === 'MANAGER')) {
+      if (!assignedWarehouses || assignedWarehouses.length !== 1) {
+        return NextResponse.json(
+          { error: 'Operators and Managers must be assigned to exactly one warehouse' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Hash password
     const bcrypt = require('bcryptjs');
     const passwordHash = await bcrypt.hash(password, 10);

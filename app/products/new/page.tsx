@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -18,6 +20,25 @@ export default function NewProductPage() {
     reorderLevel: '0',
     abcClass: '',
   });
+
+  const userRole = (session?.user as any)?.role;
+
+  useEffect(() => {
+    if (session && userRole && userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+      router.push('/products');
+    }
+  }, [session, userRole, router]);
+
+  if (!session || (userRole && userRole !== 'ADMIN' && userRole !== 'MANAGER')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-white mb-2">Access Denied</h2>
+          <p className="text-gray-400">You don't have permission to create products.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

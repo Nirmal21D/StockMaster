@@ -30,7 +30,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
+    const session = await requireRole(request, ['ADMIN', 'MANAGER']);
     if (session instanceof NextResponse) return session;
 
     await connectDB();
@@ -53,7 +53,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
+    const session = await requireRole(request, ['ADMIN', 'MANAGER']);
     if (session instanceof NextResponse) return session;
 
     await connectDB();

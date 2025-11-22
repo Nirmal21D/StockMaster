@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditProductPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const params = useParams();
   const productId = params.id as string;
   const [loading, setLoading] = useState(true);
@@ -22,9 +24,26 @@ export default function EditProductPage() {
     abcClass: '',
   });
 
+  const userRole = (session?.user as any)?.role;
+
   useEffect(() => {
-    fetchProduct();
-  }, [productId]);
+    if (session && userRole && userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+      router.push('/products');
+    } else if (session && (userRole === 'ADMIN' || userRole === 'MANAGER')) {
+      fetchProduct();
+    }
+  }, [productId, session, userRole, router]);
+
+  if (!session || (userRole && userRole !== 'ADMIN' && userRole !== 'MANAGER')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-white mb-2">Access Denied</h2>
+          <p className="text-gray-400">You don't have permission to edit products.</p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchProduct = async () => {
     try {

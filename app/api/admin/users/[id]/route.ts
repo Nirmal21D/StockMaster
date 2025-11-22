@@ -51,6 +51,16 @@ export async function PUT(
 
     const updateData: any = {};
 
+    // Validate warehouse assignment for operators and managers
+    if (role && (role === 'OPERATOR' || role === 'MANAGER') && assignedWarehouses !== undefined) {
+      if (!assignedWarehouses || assignedWarehouses.length !== 1) {
+        return NextResponse.json(
+          { error: 'Operators and Managers must be assigned to exactly one warehouse' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (role !== undefined) updateData.role = role;

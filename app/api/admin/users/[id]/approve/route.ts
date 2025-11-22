@@ -20,8 +20,16 @@ export async function POST(
     if (!role || !assignedWarehouses || assignedWarehouses.length === 0) {
       return NextResponse.json(
         {
-          error:
-            'Role and at least one assigned warehouse are required for approval',
+          error: 'Role and assigned warehouse are required for approval',
+        },
+        { status: 400 }
+      );
+    }
+
+    if (assignedWarehouses.length !== 1) {
+      return NextResponse.json(
+        {
+          error: 'Operators and Managers can only be assigned to exactly one warehouse',
         },
         { status: 400 }
       );

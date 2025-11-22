@@ -258,6 +258,11 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="font-medium text-white">{user.name}</p>
                   <p className="text-sm text-gray-400">{user.email}</p>
+                  {user.role && (
+                    <p className="text-sm text-blue-400 mt-1">
+                      Requested: <span className="font-medium">{user.role}</span>
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     Registered: {new Date(user.createdAt).toLocaleDateString()}
                   </p>
@@ -357,7 +362,7 @@ export default function AdminUsersPage() {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                Assigned Warehouses
+                Assigned Warehouse
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">
                 Actions
@@ -399,7 +404,7 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-6 py-4 text-gray-300 text-sm">
                   {user.assignedWarehouses.length > 0
-                    ? user.assignedWarehouses.map((wh) => wh.name).join(', ')
+                    ? user.assignedWarehouses[0].name
                     : '-'}
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -462,14 +467,16 @@ function ApproveUserDialog({
   onApprove: (user: User, role: 'MANAGER' | 'OPERATOR', warehouses: string[], primary?: string) => void;
   onClose: () => void;
 }) {
-  const [role, setRole] = useState<'MANAGER' | 'OPERATOR'>('OPERATOR');
+  const [role, setRole] = useState<'MANAGER' | 'OPERATOR'>(
+    (user.role === 'MANAGER' || user.role === 'OPERATOR') ? user.role : 'OPERATOR'
+  );
   const [selectedWarehouses, setSelectedWarehouses] = useState<string[]>([]);
   const [primaryWarehouse, setPrimaryWarehouse] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedWarehouses.length === 0) {
-      alert('Please select at least one warehouse');
+      alert('Please select a warehouse');
       return;
     }
     onApprove(user, role, selectedWarehouses, primaryWarehouse || undefined);
@@ -479,9 +486,16 @@ function ApproveUserDialog({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold text-white mb-4">Approve User</h2>
-        <p className="text-gray-400 mb-4">
+        <p className="text-gray-400 mb-2">
           Approve <strong className="text-white">{user.name}</strong> and assign role and warehouses.
         </p>
+        {user.role && (
+          <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+            <p className="text-blue-400 text-sm">
+              📋 <strong>Requested Role:</strong> {user.role}
+            </p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Role *</label>
@@ -497,54 +511,31 @@ function ApproveUserDialog({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Assigned Warehouses *
+              Assigned Warehouse *
             </label>
-            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-2">
+            <select
+              value={selectedWarehouses[0] || ''}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSelectedWarehouses([e.target.value]);
+                  setPrimaryWarehouse(e.target.value);
+                } else {
+                  setSelectedWarehouses([]);
+                  setPrimaryWarehouse('');
+                }
+              }}
+              required
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select warehouse</option>
               {warehouses.map((wh) => (
-                <label key={wh._id} className="flex items-center gap-2 text-white">
-                  <input
-                    type="checkbox"
-                    checked={selectedWarehouses.includes(wh._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedWarehouses([...selectedWarehouses, wh._id]);
-                        if (!primaryWarehouse) setPrimaryWarehouse(wh._id);
-                      } else {
-                        setSelectedWarehouses(selectedWarehouses.filter((id) => id !== wh._id));
-                        if (primaryWarehouse === wh._id) {
-                          setPrimaryWarehouse(selectedWarehouses.find((id) => id !== wh._id) || '');
-                        }
-                      }
-                    }}
-                    className="rounded border-gray-600"
-                  />
-                  <span>{wh.name} ({wh.code})</span>
-                </label>
+                <option key={wh._id} value={wh._id}>
+                  {wh.name} ({wh.code})
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-          {selectedWarehouses.length > 1 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Primary Warehouse
-              </label>
-              <select
-                value={primaryWarehouse}
-                onChange={(e) => setPrimaryWarehouse(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select primary warehouse</option>
-                {selectedWarehouses.map((whId) => {
-                  const wh = warehouses.find((w) => w._id === whId);
-                  return (
-                    <option key={whId} value={whId}>
-                      {wh?.name} ({wh?.code})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-          )}
+
           <div className="flex gap-3">
             <button
               type="submit"
@@ -683,7 +674,6 @@ function UserFormDialog({
               <option value="">Select role</option>
               <option value="OPERATOR">Operator</option>
               <option value="MANAGER">Manager</option>
-              <option value="ADMIN">Admin</option>
             </select>
           </div>
           <div>
@@ -699,63 +689,41 @@ function UserFormDialog({
               <option value="INACTIVE">Inactive</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Assigned Warehouses
-            </label>
-            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-2">
-              {warehouses.map((wh) => (
-                <label key={wh._id} className="flex items-center gap-2 text-white">
-                  <input
-                    type="checkbox"
-                    checked={formData.assignedWarehouses.includes(wh._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({
-                          ...formData,
-                          assignedWarehouses: [...formData.assignedWarehouses, wh._id],
-                          primaryWarehouseId: formData.primaryWarehouseId || wh._id,
-                        });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          assignedWarehouses: formData.assignedWarehouses.filter((id) => id !== wh._id),
-                          primaryWarehouseId:
-                            formData.primaryWarehouseId === wh._id
-                              ? formData.assignedWarehouses.find((id) => id !== wh._id) || ''
-                              : formData.primaryWarehouseId,
-                        });
-                      }
-                    }}
-                    className="rounded border-gray-600"
-                  />
-                  <span>{wh.name} ({wh.code})</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {formData.assignedWarehouses.length > 1 && (
+          {formData.role && formData.role !== 'ADMIN' && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Primary Warehouse
+                Assigned Warehouse *
               </label>
               <select
-                value={formData.primaryWarehouseId}
-                onChange={(e) => setFormData({ ...formData, primaryWarehouseId: e.target.value })}
+                value={formData.assignedWarehouses[0] || ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setFormData({
+                      ...formData,
+                      assignedWarehouses: [e.target.value],
+                      primaryWarehouseId: e.target.value,
+                    });
+                  } else {
+                    setFormData({
+                      ...formData,
+                      assignedWarehouses: [],
+                      primaryWarehouseId: '',
+                    });
+                  }
+                }}
+                required={formData.role !== 'ADMIN'}
                 className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select primary warehouse</option>
-                {formData.assignedWarehouses.map((whId) => {
-                  const wh = warehouses.find((w) => w._id === whId);
-                  return (
-                    <option key={whId} value={whId}>
-                      {wh?.name} ({wh?.code})
-                    </option>
-                  );
-                })}
+                <option value="">Select warehouse</option>
+                {warehouses.map((wh) => (
+                  <option key={wh._id} value={wh._id}>
+                    {wh.name} ({wh.code})
+                  </option>
+                ))}
               </select>
             </div>
           )}
+
           <div className="flex gap-3">
             <button
               type="submit"

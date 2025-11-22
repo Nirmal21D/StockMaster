@@ -8,11 +8,18 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { name, email, password, note } = body;
+    const { name, email, password, role } = body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !role) {
       return NextResponse.json(
-        { error: 'Name, email, and password are required' },
+        { error: 'Name, email, password, and role are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!['OPERATOR', 'MANAGER'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Invalid role. Must be OPERATOR or MANAGER' },
         { status: 400 }
       );
     }
@@ -29,13 +36,13 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with PENDING status
+    // Create user with PENDING status and requested role
     const user = await User.create({
       name,
       email,
       password: passwordHash,
       status: 'PENDING',
-      role: null,
+      role: role, // Store the requested role
       assignedWarehouses: [],
       isActive: true,
     });
