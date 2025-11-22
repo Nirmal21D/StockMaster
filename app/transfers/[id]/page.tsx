@@ -111,11 +111,11 @@ export default function TransferDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/50';
       case 'IN_TRANSIT':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted text-muted-foreground border-muted-foreground/50';
     }
   };
 
@@ -213,7 +213,7 @@ export default function TransferDetailPage() {
             <button
               onClick={handleDispatch}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Dispatching...' : 'Dispatch'}
@@ -223,7 +223,7 @@ export default function TransferDetailPage() {
             <button
               onClick={handleAccept}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Marking as Received...' : 'Mark as Received'}
@@ -251,7 +251,7 @@ export default function TransferDetailPage() {
               </label>
               <Link
                 href={`/requisitions/${transfer.requisitionId._id || transfer.requisitionId}`}
-                className="text-blue-400 hover:text-blue-300"
+                className="text-primary hover:text-primary/80 transition-colors"
               >
                 {transfer.requisitionId?.requisitionNumber || transfer.requisitionId}
               </Link>
@@ -260,12 +260,12 @@ export default function TransferDetailPage() {
 
           {transfer.deliveryId && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Delivery
               </label>
               <Link
                 href={`/deliveries/${transfer.deliveryId._id || transfer.deliveryId}`}
-                className="text-blue-400 hover:text-blue-300"
+                className="text-primary hover:text-primary/80 transition-colors"
               >
                 {transfer.deliveryId?.deliveryNumber || transfer.deliveryId}
               </Link>
@@ -306,10 +306,10 @@ export default function TransferDetailPage() {
 
           {transfer.dispatchedAt && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Dispatched At
               </label>
-              <p className="text-white">{formatDate(transfer.dispatchedAt)}</p>
+              <p className="text-foreground">{formatDate(transfer.dispatchedAt)}</p>
             </div>
           )}
 

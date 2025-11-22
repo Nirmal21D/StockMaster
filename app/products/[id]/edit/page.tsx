@@ -21,6 +21,7 @@ export default function EditProductPage() {
     unit: 'pcs',
     price: '',
     reorderLevel: '0',
+    quantity: '',
     abcClass: '',
     description: '',
     isActive: true,
@@ -40,8 +41,8 @@ export default function EditProductPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-white mb-2">Access Denied</h2>
-          <p className="text-gray-400">You don't have permission to edit products.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have permission to edit products.</p>
         </div>
       </div>
     );
@@ -59,6 +60,7 @@ export default function EditProductPage() {
         unit: product.unit || 'pcs',
         price: product.price?.toString() || '',
         reorderLevel: product.reorderLevel?.toString() || '0',
+        quantity: product.quantity?.toString() || '',
         abcClass: product.abcClass || '',
         description: product.description || '',
         isActive: product.isActive !== undefined ? product.isActive : true,
@@ -83,6 +85,7 @@ export default function EditProductPage() {
           ...formData,
           price: formData.price ? parseFloat(formData.price) : undefined,
           reorderLevel: parseInt(formData.reorderLevel) || 0,
+          quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
           abcClass: formData.abcClass || undefined,
           description: formData.description || undefined,
           isActive: formData.isActive,
@@ -105,7 +108,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -115,23 +118,23 @@ export default function EditProductPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/products"
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
-        <h1 className="text-3xl font-bold text-white">Edit Product</h1>
+        <h1 className="text-3xl font-bold text-foreground">Edit Product</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-6 shadow-lg">
         {error && (
-          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+          <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Product Name *
             </label>
             <input
@@ -139,12 +142,12 @@ export default function EditProductPage() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               SKU *
             </label>
             <input
@@ -152,31 +155,31 @@ export default function EditProductPage() {
               required
               value={formData.sku}
               onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Category
             </label>
             <input
               type="text"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Unit *
             </label>
             <select
               required
               value={formData.unit}
               onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="pcs">Pieces (pcs)</option>
               <option value="kg">Kilograms (kg)</option>
@@ -189,7 +192,7 @@ export default function EditProductPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Price (Optional)
             </label>
             <input
@@ -198,12 +201,12 @@ export default function EditProductPage() {
               min="0"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Reorder Level *
             </label>
             <input
@@ -212,18 +215,31 @@ export default function EditProductPage() {
               min="0"
               value={formData.reorderLevel}
               onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Edit Quantity
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Enter new quantity..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               ABC Class
             </label>
             <select
               value={formData.abcClass}
               onChange={(e) => setFormData({ ...formData, abcClass: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Not Set</option>
               <option value="A">A - High Value</option>
@@ -233,45 +249,45 @@ export default function EditProductPage() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Enter product description..."
             />
           </div>
 
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 bg-gray-800 border-gray-700 rounded text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 bg-background border-input rounded text-primary focus:ring-primary"
               />
               Active Status
             </label>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {formData.isActive ? 'Product is active and visible' : 'Product is inactive and hidden'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-black/10 dark:border-white/10">
           <Link
             href="/products"
-            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-200"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-200"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}

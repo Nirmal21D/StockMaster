@@ -264,9 +264,9 @@ export default function NewAdjustmentPage() {
             <div
               className={`px-4 py-2 bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg font-medium ${
                 difference > 0
-                  ? 'text-green-500'
+                  ? 'text-primary'
                   : difference < 0
-                  ? 'text-red-500'
+                  ? 'text-destructive'
                   : 'text-muted-foreground'
               }`}
             >

@@ -105,15 +105,15 @@ export default function DeliveriesPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/30';
       case 'READY':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'WAITING':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
       case 'REJECTED':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
@@ -134,13 +134,13 @@ export default function DeliveriesPage() {
 
       {/* Tabs for Managers */}
       {userRole === 'MANAGER' && (
-        <div className="flex gap-2 border-b border-gray-800">
+        <div className="flex gap-2 border-b border-border">
           <button
             onClick={() => setViewType('all')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'all'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All
@@ -149,8 +149,8 @@ export default function DeliveriesPage() {
             onClick={() => setViewType('sent')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'sent'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Sent ({allDeliveries.filter((del) => {
@@ -166,8 +166,8 @@ export default function DeliveriesPage() {
             onClick={() => setViewType('received')}
             className={`px-4 py-2 font-medium transition-colors ${
               viewType === 'received'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Received ({allDeliveries.filter((del) => {
@@ -206,19 +206,19 @@ export default function DeliveriesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reference
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   From Warehouse
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   To Warehouse
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -229,10 +229,10 @@ export default function DeliveriesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {delivery.deliveryNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {delivery.warehouseId?.name || delivery.warehouseId?.code || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {delivery.targetWarehouseId?.name || delivery.targetWarehouseId?.code || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">

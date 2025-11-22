@@ -325,7 +325,7 @@ export default function NewTransferPage() {
           </span>
         )}
         {delivery && (
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-muted-foreground">
             (From Delivery: {delivery.deliveryNumber})
           </span>
         )}
@@ -341,13 +341,13 @@ export default function NewTransferPage() {
         {/* Delivery Selection for Operators */}
         {(session?.user as any)?.role === 'OPERATOR' && (
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Select Approved Delivery (Waiting for Dispatch)
             </label>
             <select
               value={formData.deliveryId}
               onChange={(e) => handleDeliverySelect(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select a delivery to create transfer (optional)</option>
               {availableDeliveries.length > 0 ? (
@@ -360,7 +360,7 @@ export default function NewTransferPage() {
                 <option value="" disabled>No approved deliveries waiting for dispatch</option>
               )}
             </select>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               These are deliveries approved by managers that are waiting to be dispatched from your warehouse. Selecting one will auto-fill the transfer details.
             </p>
           </div>
@@ -375,7 +375,7 @@ export default function NewTransferPage() {
               required
               value={formData.sourceWarehouseId}
               onChange={(e) => setFormData({ ...formData, sourceWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               disabled={!!delivery}
             >
               <option value="">Select source warehouse</option>
@@ -395,7 +395,7 @@ export default function NewTransferPage() {
               required
               value={formData.targetWarehouseId}
               onChange={(e) => setFormData({ ...formData, targetWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               disabled={!!delivery}
             >
               <option value="">Select target warehouse</option>

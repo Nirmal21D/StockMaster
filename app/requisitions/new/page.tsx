@@ -153,14 +153,14 @@ export default function NewRequisitionPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/requisitions"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
-          <h1 className="text-3xl font-bold text-white">New Requisition</h1>
+          <h1 className="text-3xl font-bold text-foreground">New Requisition</h1>
         </div>
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
-          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
+          <div className="p-4 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
             Access Denied: Only Managers can create requisitions. Requisitions are automatically submitted upon creation.
           </div>
         </div>
@@ -193,17 +193,17 @@ export default function NewRequisitionPage() {
               Requesting Warehouse *
             </label>
             {(userRole === 'MANAGER' || userRole === 'OPERATOR') && formData.requestingWarehouseId ? (
-              <div className="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-400">
+              <div className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-muted-foreground">
                 {warehouses.find((wh) => wh._id === formData.requestingWarehouseId)?.name || 'Loading...'} (
                 {warehouses.find((wh) => wh._id === formData.requestingWarehouseId)?.code || ''})
-                <span className="ml-2 text-xs text-blue-400">(Auto-selected)</span>
+                <span className="ml-2 text-xs text-primary">(Auto-selected)</span>
               </div>
             ) : (
               <select
                 required
                 value={formData.requestingWarehouseId}
                 onChange={(e) => setFormData({ ...formData, requestingWarehouseId: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select warehouse</option>
                 {warehouses.map((wh) => (

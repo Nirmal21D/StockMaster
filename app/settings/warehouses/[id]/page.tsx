@@ -221,12 +221,12 @@ export default function WarehouseDetailPage() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Status</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Status</label>
               <span
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                className={`px-2 py-1 text-xs font-semibold rounded-full border ${
                   warehouse.isActive
-                    ? 'bg-green-500/20 text-green-400 border-green-500/50'
-                    : 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+                    ? 'bg-primary/20 text-primary border-primary/50'
+                    : 'bg-muted text-muted-foreground border-muted-foreground/50'
                 }`}
               >
                 {warehouse.isActive ? 'Active' : 'Inactive'}
@@ -254,7 +254,7 @@ export default function WarehouseDetailPage() {
             </div>
 
             {showAddUser && availableUsers.length > 0 && (
-              <div className="mb-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
+              <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-black/10 dark:border-white/10">
                 <select
                   onChange={(e) => {
                     if (e.target.value) {
@@ -262,7 +262,7 @@ export default function WarehouseDetailPage() {
                       e.target.value = '';
                     }
                   }}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   defaultValue=""
                 >
                   <option value="">Select user to assign...</option>
@@ -274,7 +274,7 @@ export default function WarehouseDetailPage() {
                 </select>
                 <button
                   onClick={() => setShowAddUser(false)}
-                  className="mt-2 text-sm text-gray-400 hover:text-gray-300"
+                  className="mt-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Cancel
                 </button>
@@ -302,10 +302,10 @@ export default function WarehouseDetailPage() {
                       <p className="text-foreground font-medium">{user.name}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                       <span
-                        className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-full border ${
                           user.role === 'MANAGER'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-green-500/20 text-green-400'
+                            ? 'bg-primary/20 text-primary border-primary/50'
+                            : 'bg-primary/20 text-primary border-primary/50'
                         }`}
                       >
                         {user.role}

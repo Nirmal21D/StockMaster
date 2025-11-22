@@ -250,14 +250,14 @@ export default function NewDeliveryPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               To Warehouse (Destination) *
             </label>
             <select
               required
               value={formData.targetWarehouseId}
               onChange={(e) => setFormData({ ...formData, targetWarehouseId: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select target warehouse</option>
               {warehouses
