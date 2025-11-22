@@ -12,6 +12,8 @@ export interface IUser extends Document {
   assignedWarehouses: mongoose.Types.ObjectId[];
   primaryWarehouseId?: mongoose.Types.ObjectId | null;
   isActive: boolean; // Legacy field, kept for backward compatibility
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +47,8 @@ const UserSchema = new Schema<IUser>(
       default: null,
     },
     isActive: { type: Boolean, default: true },
+    resetToken: { type: String, default: undefined },
+    resetTokenExpiry: { type: Date, default: undefined },
   },
   {
     timestamps: true,

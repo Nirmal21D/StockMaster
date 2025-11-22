@@ -6,18 +6,37 @@ import Link from 'next/link';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setError('');
     setLoading(true);
 
     try {
-      // Note: In a real app, you'd implement password reset functionality
-      setMessage('Password reset functionality requires backend implementation');
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message);
+        // In development, also show the console message
+        if (process.env.NODE_ENV === 'development') {
+          setMessage(data.message + ' Check the console for the reset link.');
+        }
+      } else {
+        setError(data.error || 'An error occurred. Please try again.');
+      }
     } catch (error) {
-      setMessage('An error occurred. Please try again.');
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -33,8 +52,14 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {message && (
-            <div className="p-3 bg-blue-500/20 border border-blue-500 rounded-lg text-blue-400 text-sm">
+            <div className="p-3 bg-green-500/20 border border-green-500 rounded-lg text-green-400 text-sm">
               {message}
+            </div>
+          )}
+          
+          {error && (
+            <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm">
+              {error}
             </div>
           )}
 
