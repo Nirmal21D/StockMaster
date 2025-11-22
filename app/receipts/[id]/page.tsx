@@ -79,11 +79,11 @@ export default function ReceiptDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/30';
       case 'WAITING':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
@@ -139,7 +139,7 @@ export default function ReceiptDetailPage() {
             <button
               onClick={handleValidate}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Validating...' : 'Validate'}

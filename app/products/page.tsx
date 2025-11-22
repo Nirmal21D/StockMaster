@@ -85,11 +85,11 @@ export default function ProductsPage() {
     <div className="space-y-6">
       {/* Import Success Message */}
       {showImportSuccess && (
-        <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 flex items-center space-x-3">
-          <CheckCircle className="w-5 h-5 text-green-400" />
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center space-x-3 backdrop-blur-sm">
+          <CheckCircle className="w-5 h-5 text-primary" />
           <div className="flex-1">
-            <h3 className="text-green-400 font-medium">Import Successful!</h3>
-            <p className="text-gray-300 text-sm">
+            <h3 className="text-primary font-medium">Import Successful!</h3>
+            <p className="text-muted-foreground text-sm">
               Products imported successfully.
               {searchParams?.get('created') && ` ${searchParams.get('created')} created.`}
               {searchParams?.get('updated') && ` ${searchParams.get('updated')} updated.`}
@@ -97,7 +97,7 @@ export default function ProductsPage() {
           </div>
           <button
             onClick={() => setShowImportSuccess(false)}
-            className="text-green-400 hover:text-green-300"
+            className="text-primary hover:text-primary/80"
           >
             ×
           </button>
@@ -105,11 +105,11 @@ export default function ProductsPage() {
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Products</h1>
+        <h1 className="text-3xl font-bold text-foreground">Products</h1>
         {canCreate && (
           <Link
             href="/products/new-enhanced"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200"
           >
             <Plus className="w-5 h-5" />
             Add Products
@@ -119,76 +119,76 @@ export default function ProductsPage() {
 
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search products by name or SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 bg-background/50 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading products...</div>
+        <div className="text-center py-12 text-muted-foreground">Loading products...</div>
       ) : (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 overflow-hidden shadow-lg">
           <table className="w-full">
-            <thead className="bg-gray-800">
+            <thead className="bg-muted/30">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   SKU
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Unit
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Total Quantity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Reorder Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   ABC Class
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-black/10 dark:divide-white/10">
               {Array.isArray(products) && products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                <tr key={product._id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {product.sku}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {product.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {product.category || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {product.unit}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <span className={product.totalQuantity !== undefined && product.totalQuantity < product.reorderLevel ? 'text-red-400' : 'text-white'}>
+                    <span className={product.totalQuantity !== undefined && product.totalQuantity < product.reorderLevel ? 'text-destructive' : 'text-foreground'}>
                       {product.totalQuantity !== undefined ? `${product.totalQuantity} ${product.unit}` : '-'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {product.reorderLevel}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {product.abcClass && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-400">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary border border-primary/30">
                         {product.abcClass}
                       </span>
                     )}
@@ -198,7 +198,7 @@ export default function ProductsPage() {
                       {canCreate && (
                         <Link
                           href={`/products/${product._id}/edit`}
-                          className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary/80"
                         >
                           <Edit className="w-4 h-4" />
                           Edit
@@ -207,7 +207,7 @@ export default function ProductsPage() {
                       {canCreate && (
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="inline-flex items-center gap-1 text-red-400 hover:text-red-300"
+                          className="inline-flex items-center gap-1 text-destructive hover:text-destructive/80"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete
@@ -220,7 +220,7 @@ export default function ProductsPage() {
             </tbody>
           </table>
           {(!Array.isArray(products) || products.length === 0) && (
-            <div className="text-center py-12 text-gray-400">No products found</div>
+            <div className="text-center py-12 text-muted-foreground">No products found</div>
           )}
         </div>
       )}

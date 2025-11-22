@@ -147,15 +147,15 @@ export default function DeliveryDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400 border-green-500/50';
+        return 'bg-primary/20 text-primary border-primary/30';
       case 'READY':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'WAITING':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
       case 'REJECTED':
-        return 'bg-red-500/20 text-red-400 border-red-500/50';
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
@@ -284,7 +284,7 @@ export default function DeliveryDetailPage() {
               <button
                 onClick={handleApprove}
                 disabled={validating}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-200"
               >
                 <CheckCircle className="w-4 h-4" />
                 {validating ? 'Approving...' : 'Approve Delivery'}
@@ -292,7 +292,7 @@ export default function DeliveryDetailPage() {
             <button
                 onClick={handleReject}
               disabled={validating}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive/90 disabled:bg-muted disabled:cursor-not-allowed text-destructive-foreground rounded-lg transition-all duration-200"
             >
               <CheckCircle className="w-4 h-4" />
                 {validating ? 'Rejecting...' : 'Reject Delivery'}
@@ -303,7 +303,7 @@ export default function DeliveryDetailPage() {
             <button
               onClick={handleValidate}
               disabled={validating}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <CheckCircle className="w-4 h-4" />
               {validating ? 'Validating...' : 'Validate'}
@@ -312,13 +312,13 @@ export default function DeliveryDetailPage() {
           {canCreateTransfer && (
             <Link
               href={`/transfers/new?deliveryId=${deliveryId}`}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200"
             >
               <Plus className="w-4 h-4" />
               Create Transfer
             </Link>
           )}
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg transition-all duration-200">
             <Printer className="w-4 h-4" />
             Print
           </button>
@@ -341,7 +341,7 @@ export default function DeliveryDetailPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Source Warehouse
             </label>
             <p className="text-foreground">
@@ -351,10 +351,10 @@ export default function DeliveryDetailPage() {
 
           {delivery.targetWarehouseId && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Target Warehouse
               </label>
-              <p className="text-white">
+              <p className="text-foreground">
                 {delivery.targetWarehouseId?.name} ({delivery.targetWarehouseId?.code})
               </p>
             </div>
@@ -362,12 +362,12 @@ export default function DeliveryDetailPage() {
 
           {delivery.requisitionId && (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Requisition
               </label>
               <Link
                 href={`/requisitions/${delivery.requisitionId._id}`}
-                className="text-blue-400 hover:text-blue-300"
+                className="text-primary hover:text-primary/80"
               >
                 {delivery.requisitionId?.requisitionNumber || delivery.requisitionId}
               </Link>
@@ -425,16 +425,16 @@ export default function DeliveryDetailPage() {
           {delivery.acceptedBy && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Accepted By
                 </label>
-                <p className="text-white">{delivery.acceptedBy?.name || '-'}</p>
+                <p className="text-foreground">{delivery.acceptedBy?.name || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Accepted At
                 </label>
-                <p className="text-white">{formatDate(delivery.acceptedAt!)}</p>
+                <p className="text-foreground">{formatDate(delivery.acceptedAt!)}</p>
               </div>
             </>
           )}

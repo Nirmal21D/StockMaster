@@ -1,118 +1,197 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, User, Warehouse } from 'lucide-react';
+import Link from 'next/link';
+import { LogOut, User, LayoutDashboard, Package, ArrowDownCircle, ArrowUpCircle, FileText, Truck, Settings, History, ClipboardList, Users, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 import { WarehouseFilter } from './WarehouseFilter';
+import { AnimatedThemeToggler } from './ui/animated-theme-toggler';
+import { cn } from '@/lib/utils';
+import type { Role } from '@/lib/authRoles';
 
-const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/products': 'Products',
-  '/receipts': 'Receipts',
-  '/deliveries': 'Deliveries',
-  '/requisitions': 'Requisitions',
-  '/transfers': 'Transfers',
-  '/adjustments': 'Adjustments',
-  '/ledger': 'Move History',
-  '/settings': 'Settings',
-};
-
-function getPageTitle(pathname: string): string {
-  for (const [path, title] of Object.entries(pageTitles)) {
-    if (pathname === path || pathname?.startsWith(path + '/')) {
-      return title;
-    }
-  }
-  return 'StockMaster';
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: Role[];
 }
+
+const navigation: NavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Products', href: '/products', icon: Package, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Receipts', href: '/receipts', icon: ArrowDownCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Deliveries', href: '/deliveries', icon: ArrowUpCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Transfers', href: '/transfers', icon: Truck, roles: ['ADMIN', 'MANAGER'] },
+  { name: 'Adjustments', href: '/adjustments', icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Move History', href: '/ledger', icon: History, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Users', href: '/admin/users', icon: Users, roles: ['ADMIN'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+];
 
 export function TopBar() {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const pageTitle = getPageTitle(pathname || '');
-  const [managerWarehouse, setManagerWarehouse] = useState<any>(null);
-  const [operatorWarehouses, setOperatorWarehouses] = useState<any[]>([]);
-
-  const userRole = (session?.user as any)?.role;
-  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
-  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const userRole = (session?.user as any)?.role as Role | undefined;
 
   useEffect(() => {
-    if (userRole === 'MANAGER') {
-      const mainWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
-      if (mainWarehouseId) {
-        fetch(`/api/warehouses/${mainWarehouseId}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data && !data.error) {
-              setManagerWarehouse(data);
-            }
-          })
-          .catch((err) => console.error('Failed to fetch warehouse:', err));
-      }
-    } else if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
-      // Fetch all assigned warehouses for operator
-      const warehousePromises = assignedWarehouses.map((whId: string) =>
-        fetch(`/api/warehouses/${whId}`)
-          .then((res) => res.json())
-          .then((data) => (data && !data.error ? data : null))
-          .catch(() => null)
-      );
-      
-      Promise.all(warehousePromises)
-        .then((warehouses) => {
-          setOperatorWarehouses(warehouses.filter((wh) => wh !== null));
-        })
-        .catch((err) => console.error('Failed to fetch warehouses:', err));
-    }
-  }, [userRole, primaryWarehouseId, assignedWarehouses]);
+    setMounted(true);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     router.push('/auth/signin');
   };
 
-  return (
-    <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
-        <h2 className="text-xl font-semibold text-white">{pageTitle}</h2>
-        <WarehouseFilter />
-        {userRole === 'MANAGER' && managerWarehouse && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg">
-            <Warehouse className="w-4 h-4 text-blue-400" />
-            <span className="text-sm text-blue-300 font-medium">
-              Manager of: {managerWarehouse.name}
-            </span>
-          </div>
-        )}
-        {userRole === 'OPERATOR' && operatorWarehouses.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg">
-            <Warehouse className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-green-300 font-medium">
-              Operator at: {operatorWarehouses.map((wh) => wh.name).join(', ')}
-            </span>
-          </div>
-        )}
-      </div>
+  // Filter navigation based on user role
+  const visibleNavigation = navigation.filter((item) => {
+    if (!userRole) return false;
+    return item.roles.includes(userRole);
+  });
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg">
-          <User className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-300">
-            {(session?.user as any)?.role || 'USER'}
-          </span>
+  return (
+    <>
+      <div className="h-16 bg-card/40 backdrop-blur-xl border-b border-black/10 dark:border-white/10 flex items-center justify-between px-4 lg:px-6">
+        <div className="flex items-center gap-4 lg:gap-6">
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center gap-2">
+            {mounted && (
+              <img 
+                src={theme === 'dark' ? '/app_dark.png' : '/sm.png'} 
+                alt="StockMaster" 
+                className="h-8 lg:h-10 w-auto" 
+              />
+            )}
+            {!mounted && (
+              <img src="/sm.png" alt="StockMaster" className="h-8 lg:h-10 w-auto" />
+            )}
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden xl:flex items-center gap-1">
+            {visibleNavigation.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="relative group block"
+                >
+                  <div className={cn(
+                    'flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </div>
+                  <span 
+                    className={cn(
+                      'absolute bottom-0 left-0 h-[3px] bg-primary transition-all duration-300 ease-in-out rounded-full',
+                      isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    )}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out</span>
-        </button>
+        <div className="flex items-center gap-2 lg:gap-3">
+          <div className="hidden md:block">
+            <WarehouseFilter />
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg">
+            <User className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground">
+              {(session?.user as any)?.role || 'USER'}
+            </span>
+          </div>
+
+          {mounted && (
+            <AnimatedThemeToggler className="p-2 bg-background/50 hover:bg-muted border border-black/10 dark:border-white/10 rounded-lg transition-all duration-300 [&_svg]:w-4 [&_svg]:h-4 [&_svg]:text-foreground" />
+          )}
+
+          <button
+            onClick={handleSignOut}
+            className="hidden sm:flex items-center gap-2 px-3 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-300"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="xl:hidden p-2 bg-background/50 hover:bg-muted border border-black/10 dark:border-white/10 rounded-lg transition-all duration-300"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5 text-foreground" />
+            ) : (
+              <Menu className="w-5 h-5 text-foreground" />
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="xl:hidden bg-card/40 backdrop-blur-xl border-b border-black/10 dark:border-white/10 px-4 py-4 space-y-2">
+          {/* Mobile Warehouse Filter */}
+          <div className="md:hidden mb-3">
+            <WarehouseFilter />
+          </div>
+
+          {/* Mobile Navigation */}
+          {visibleNavigation.map((item) => {
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 w-full border-l-4',
+                  isActive
+                    ? 'bg-primary/10 text-primary border-primary'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground border-transparent'
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+
+          {/* Mobile User Role (visible on small screens) */}
+          <div className="sm:hidden flex items-center gap-2 px-4 py-3 bg-background/50 border border-black/10 dark:border-white/10 rounded-lg">
+            <User className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm text-foreground">
+              {(session?.user as any)?.role || 'USER'}
+            </span>
+          </div>
+
+          {/* Mobile Sign Out */}
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              handleSignOut();
+            }}
+            className="sm:hidden flex items-center gap-3 px-4 py-3 w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-300"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      )}
+    </>
   );
 }

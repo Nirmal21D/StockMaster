@@ -137,11 +137,11 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       )}
 
       {userRole === 'MANAGER' && managerWarehouse && (
-        <div className="bg-blue-500/20 border border-blue-500/50 rounded-xl p-4 flex items-center gap-3">
-          <Package className="w-5 h-5 text-blue-400" />
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-3 backdrop-blur-sm">
+          <Package className="w-5 h-5 text-primary" />
           <div>
-            <p className="text-sm text-blue-300 font-medium">Your Center</p>
-            <p className="text-lg text-white font-semibold">{managerWarehouse.name} ({managerWarehouse.code})</p>
+            <p className="text-sm text-muted-foreground font-medium">Your Center</p>
+            <p className="text-lg text-foreground font-semibold">{managerWarehouse.name} ({managerWarehouse.code})</p>
           </div>
         </div>
       )}
@@ -192,39 +192,39 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       </div>
 
       {/* Role-specific Quick Links */}
-      <div className="mt-8 bg-gray-900 rounded-xl border border-gray-800 p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+      <div className="mt-8 bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {userRole === 'ADMIN' && (
             <>
               <Link
                 href="/admin/users"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Users className="w-5 h-5 text-blue-400" />
+                <Users className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Manage Users</div>
-                  <div className="text-sm text-gray-400">Approve and manage user accounts</div>
+                  <div className="text-foreground font-medium">Manage Users</div>
+                  <div className="text-sm text-muted-foreground">Approve and manage user accounts</div>
                 </div>
               </Link>
               <Link
                 href="/settings/warehouses"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Warehouse className="w-5 h-5 text-blue-400" />
+                <Warehouse className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Manage Warehouses</div>
-                  <div className="text-sm text-gray-400">Create and configure warehouses</div>
+                  <div className="text-foreground font-medium">Manage Warehouses</div>
+                  <div className="text-sm text-muted-foreground">Create and configure warehouses</div>
                 </div>
               </Link>
               <Link
                 href="/products/new"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Package className="w-5 h-5 text-blue-400" />
+                <Package className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Add Product</div>
-                  <div className="text-sm text-gray-400">Create new product master data</div>
+                  <div className="text-foreground font-medium">Add Product</div>
+                  <div className="text-sm text-muted-foreground">Create new product master data</div>
                 </div>
               </Link>
             </>
@@ -234,32 +234,32 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
             <>
               <Link
                 href="/requisitions?status=SUBMITTED"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <FileText className="w-5 h-5 text-yellow-400" />
+                <FileText className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Approve Requisitions</div>
-                  <div className="text-sm text-gray-400">Review and approve stock requests</div>
+                  <div className="text-foreground font-medium">Approve Requisitions</div>
+                  <div className="text-sm text-muted-foreground">Review and approve stock requests</div>
                 </div>
               </Link>
               <Link
                 href="/transfers?status=DRAFT"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Truck className="w-5 h-5 text-purple-400" />
+                <Truck className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Validate Transfers</div>
-                  <div className="text-sm text-gray-400">Validate inter-warehouse transfers</div>
+                  <div className="text-foreground font-medium">Validate Transfers</div>
+                  <div className="text-sm text-muted-foreground">Validate inter-warehouse transfers</div>
                 </div>
               </Link>
               <Link
                 href="/products/new"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Package className="w-5 h-5 text-blue-400" />
+                <Package className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">Add Product</div>
-                  <div className="text-sm text-gray-400">Create new product master data</div>
+                  <div className="text-foreground font-medium">Add Product</div>
+                  <div className="text-sm text-muted-foreground">Create new product master data</div>
                 </div>
               </Link>
             </>
@@ -269,32 +269,32 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
             <>
               <Link
                 href="/receipts/new"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Package className="w-5 h-5 text-green-400" />
+                <Package className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">New Receipt</div>
-                  <div className="text-sm text-gray-400">Record incoming stock</div>
+                  <div className="text-foreground font-medium">New Receipt</div>
+                  <div className="text-sm text-muted-foreground">Record incoming stock</div>
                 </div>
               </Link>
               <Link
                 href="/deliveries/new"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <Truck className="w-5 h-5 text-red-400" />
+                <Truck className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">New Delivery</div>
-                  <div className="text-sm text-gray-400">Record outgoing stock</div>
+                  <div className="text-foreground font-medium">New Delivery</div>
+                  <div className="text-sm text-muted-foreground">Record outgoing stock</div>
                 </div>
               </Link>
               <Link
                 href="/requisitions/new"
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-3 p-4 bg-background/50 hover:bg-muted/50 border border-black/10 dark:border-white/10 rounded-lg transition-all duration-200"
               >
-                <FileText className="w-5 h-5 text-yellow-400" />
+                <FileText className="w-5 h-5 text-primary" />
                 <div>
-                  <div className="text-white font-medium">New Requisition</div>
-                  <div className="text-sm text-gray-400">Request stock from other warehouses</div>
+                  <div className="text-foreground font-medium">New Requisition</div>
+                  <div className="text-sm text-muted-foreground">Request stock from other warehouses</div>
                 </div>
               </Link>
             </>
