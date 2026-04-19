@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Package, CheckCircle, Truck } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Transfer {
   _id: string;
   transferNumber: string;

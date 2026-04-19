@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { geminiService, ChatMessage } from '@/lib/services/geminiService';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if user is authenticated (optional - you can remove this if you want public access)
-    const session = await getServerSession(authOptions);
+    const session = await getServerSessionFirebase();
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized. Please sign in to use the chatbot.' },
@@ -16,7 +14,6 @@ export async function POST(request: NextRequest) {
 
     const { message, conversationHistory } = await request.json();
 
-    // Validate input
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
         { success: false, error: 'Message is required and must be a non-empty string.' },
@@ -31,7 +28,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate conversation history format
     let validatedHistory: ChatMessage[] = [];
     if (conversationHistory && Array.isArray(conversationHistory)) {
       validatedHistory = conversationHistory
@@ -41,21 +37,16 @@ export async function POST(request: NextRequest) {
           typeof msg.content === 'string' && 
           (msg.role === 'user' || msg.role === 'assistant')
         )
-        .slice(-10); // Keep only last 10 messages for context
+        .slice(-10);
     }
 
-    // Check if Gemini service is configured
     if (!geminiService.isConfigured()) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'AI service is not properly configured. Please contact your administrator.' 
-        },
+        { success: false, error: 'AI service is not properly configured. Please contact your administrator.' },
         { status: 503 }
       );
     }
 
-    // Generate AI response
     const response = await geminiService.generateResponse(message, validatedHistory);
 
     if (!response.success) {
@@ -71,8 +62,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Chat API error:', error);
-
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { success: false, error: 'Invalid JSON in request body.' },
@@ -87,7 +76,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Health check endpoint
 export async function GET() {
   try {
     const isHealthy = await geminiService.healthCheck();

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, CheckCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import { useSearchParams } from 'next/navigation';
 
 interface Receipt {

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import StockLevel from '@/lib/models/StockLevel';
-import Warehouse from '@/lib/models/Warehouse';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('productId');
@@ -20,40 +15,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'productId is required' }, { status: 400 });
     }
 
-    // Find all stock levels for this product
-    const query: any = {
-      productId: new mongoose.Types.ObjectId(productId),
-      quantity: { $gt: 0 },
-    };
-
+    let query = adminDb.collection('stockLevels').where('productId', '==', productId).where('quantity', '>', 0);
+    const stockSnap = await query.get();
+    
+    let stockLevels = stockSnap.docs.map(d => d.data());
     if (excludeWarehouseId) {
-      query.warehouseId = { $ne: new mongoose.Types.ObjectId(excludeWarehouseId) };
+      stockLevels = stockLevels.filter(sl => sl.warehouseId !== excludeWarehouseId);
     }
 
-    const stockLevels = await StockLevel.find(query)
-      .populate('warehouseId', 'name code')
-      .sort({ quantity: -1 });
-
-    // Group by warehouse and sum quantities
     const warehouseStock: Record<string, any> = {};
-
     for (const stockLevel of stockLevels) {
-      const warehouseId = (stockLevel.warehouseId as any)._id.toString();
-      if (!warehouseStock[warehouseId]) {
-        warehouseStock[warehouseId] = {
-          warehouseId: (stockLevel.warehouseId as any)._id,
-          warehouseName: (stockLevel.warehouseId as any).name,
-          warehouseCode: (stockLevel.warehouseId as any).code,
+      const wid = stockLevel.warehouseId;
+      if (!warehouseStock[wid]) {
+        const wDoc = await adminDb.collection('warehouses').doc(wid).get();
+        const wData = wDoc.data() || {};
+        warehouseStock[wid] = {
+          warehouseId: wid,
+          warehouseName: wData.name,
+          warehouseCode: wData.code,
           totalQuantity: 0,
         };
       }
-      warehouseStock[warehouseId].totalQuantity += stockLevel.quantity;
+      warehouseStock[wid].totalQuantity += stockLevel.quantity;
     }
 
-    // Convert to array and sort by quantity
-    const suggestions = Object.values(warehouseStock).sort(
-      (a: any, b: any) => b.totalQuantity - a.totalQuantity
-    );
+    const suggestions = Object.values(warehouseStock).sort((a: any, b: any) => b.totalQuantity - a.totalQuantity);
 
     return NextResponse.json({
       productId,
@@ -64,4 +50,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

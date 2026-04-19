@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Requisition {
   _id: string;
   requisitionNumber: string;

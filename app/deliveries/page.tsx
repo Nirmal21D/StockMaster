@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Delivery {
   _id: string;
   deliveryNumber: string;
   warehouseId: any; // Source warehouse
   targetWarehouseId?: any; // Target warehouse
+  customerName?: string;
   status: string;
   createdAt: string;
   createdBy: any;
@@ -210,7 +210,7 @@ export default function DeliveriesPage() {
                   From Warehouse
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  To Warehouse
+                  To (Warehouse / Customer)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Created
@@ -233,7 +233,7 @@ export default function DeliveriesPage() {
                     {delivery.warehouseId?.name || delivery.warehouseId?.code || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                    {delivery.targetWarehouseId?.name || delivery.targetWarehouseId?.code || '-'}
+                    {delivery.targetWarehouseId?.name || delivery.targetWarehouseId?.code || delivery.customerName || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(delivery.createdAt)}

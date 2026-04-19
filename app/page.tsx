@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSessionFirebase();
 
   if (session) {
     redirect('/dashboard');

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -26,31 +27,29 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: '/dashboard',
-      });
+      if (!auth) throw new Error('Firebase Auth is not initialized');
 
-      if (result?.error) {
-        if (result.error.includes('pending approval') || result.error.includes('Account pending')) {
-          // Store email for pending page
-          localStorage.setItem('pendingUserEmail', email);
-          router.push('/auth/pending');
-          return;
-        } else if (result.error.includes('inactive')) {
-          setError('Your account is inactive. Please contact an administrator.');
-        } else {
-          setError(result.error === 'CredentialsSignin' ? 'Invalid login credentials' : result.error || 'An error occurred. Please try again.');
-        }
-      } else if (result?.ok) {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Mint session cookie via new API route for middleware support
+      const idToken = await userCredential.user.getIdToken();
+      const res = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+      if (res.ok) {
         router.push('/dashboard');
         router.refresh();
+      } else {
+        setError('Failed to establish session. Please try again.');
       }
     } catch (err: any) {
       console.error('Sign in error:', err);
-      setError(err?.message || 'An error occurred. Please try again.');
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid login credentials');
+      } else {
+        setError(err?.message || 'An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

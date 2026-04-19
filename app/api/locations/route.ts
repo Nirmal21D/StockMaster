@@ -1,41 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Location from '@/lib/models/Location';
-import { requireAuth, requireRole } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { adminDb } from '@/lib/firebase/admin';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
 
-    const query: any = { isActive: true };
+    let query: FirebaseFirestore.Query = adminDb.collection('locations').where('isActive', '==', true);
 
     if (warehouseId) {
-      query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
+      query = query.where('warehouseId', '==', warehouseId);
     }
 
-    const locations = await Location.find(query)
-      .populate('warehouseId', 'name code')
-      .sort({ name: 1 });
+    const snapshot = await query.get();
+    let locations = snapshot.docs.map(doc => ({
+      _id: doc.id,
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Sort in memory to avoid missing index errors in Firebase
+    locations.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''));
 
     return NextResponse.json(locations);
   } catch (error: any) {
+    // If indexing error, we just fallback to returning the error
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session || (session as any).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await request.json();
     const { name, code, description, warehouseId } = body;
@@ -44,14 +49,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const location = await Location.create({
+    const locationData = {
       name,
-      code,
-      description,
-      warehouseId: new mongoose.Types.ObjectId(warehouseId),
-    });
+      code: code || '',
+      description: description || '',
+      warehouseId,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    return NextResponse.json(location, { status: 201 });
+    const docRef = await adminDb.collection('locations').add(locationData);
+
+    return NextResponse.json({ _id: docRef.id, ...locationData }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

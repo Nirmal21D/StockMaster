@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Warehouse {
   _id: string;
   name: string;

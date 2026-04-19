@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import connectDB from '@/lib/mongodb';
-import Product from '@/lib/models/Product';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
 import { ProductImportData } from '@/lib/services/excelImportService';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSessionFirebase();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user has permission (Admin or Manager)
-    const userRole = (session.user as any)?.role;
+    const userRole = session.user?.role || 'UNKNOWN';
     if (!['ADMIN', 'MANAGER'].includes(userRole)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const { products }: { products: ProductImportData[] } = await request.json();
+    const body = await request.json();
+    const products: ProductImportData[] = body.products;
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -27,8 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
     const results = {
       total: products.length,
       created: 0,
@@ -36,31 +32,28 @@ export async function POST(request: NextRequest) {
       errors: [] as Array<{ row: number; sku: string; error: string }>,
     };
 
+    const productsRef = adminDb.collection('products');
+
     for (let i = 0; i < products.length; i++) {
       const productData = products[i];
       
       try {
-        // Check if product with SKU already exists
-        const existingProduct = await Product.findOne({ sku: productData.sku });
+        const snapshot = await productsRef.where('sku', '==', productData.sku).limit(1).get();
         
-        if (existingProduct) {
-          // Update existing product
-          await Product.findByIdAndUpdate(
-            existingProduct._id,
-            {
-              name: productData.name,
-              category: productData.category,
-              unit: productData.unit,
-              price: productData.price,
-              reorderLevel: productData.reorderLevel,
-              abcClass: productData.abcClass,
-            },
-            { new: true }
-          );
+        if (!snapshot.empty) {
+          const docId = snapshot.docs[0].id;
+          await productsRef.doc(docId).update({
+            name: productData.name,
+            category: productData.category,
+            unit: productData.unit,
+            price: productData.price,
+            reorderLevel: productData.reorderLevel,
+            abcClass: productData.abcClass,
+            updatedAt: new Date()
+          });
           results.updated++;
         } else {
-          // Create new product
-          await Product.create({
+          await productsRef.add({
             name: productData.name,
             sku: productData.sku,
             category: productData.category,
@@ -69,15 +62,17 @@ export async function POST(request: NextRequest) {
             reorderLevel: productData.reorderLevel,
             abcClass: productData.abcClass,
             isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
           });
           results.created++;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing product ${productData.sku}:`, error);
         results.errors.push({
           row: i + 1,
           sku: productData.sku,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error.message || 'Unknown error',
         });
       }
     }

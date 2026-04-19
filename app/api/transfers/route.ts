@@ -1,71 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Transfer from '@/lib/models/Transfer';
-import Warehouse from '@/lib/models/Warehouse';
-import Requisition from '@/lib/models/Requisition';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
+import { getDocument, getCollection } from '@/lib/firebase/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const warehouseIds = searchParams.getAll('warehouseId');
     const status = searchParams.get('status');
 
-    const query: any = {};
-    const userRole = (session.user as any)?.role;
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    let transfersRef: any = adminDb.collection('transfers');
 
-    // For Operators, filter by their assigned warehouses if not already filtered
-    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0 && warehouseIds.length === 0) {
-      // Convert assignedWarehouses to ObjectIds (handle both string and ObjectId formats)
-      const warehouseObjectIds = assignedWarehouses.map((id: any) => {
-        if (id instanceof mongoose.Types.ObjectId) {
-          return id;
-        }
-        if (typeof id === 'string') {
-          return new mongoose.Types.ObjectId(id);
-        }
-        return new mongoose.Types.ObjectId(String(id));
-      });
-      
-      // Operators should see transfers where they are either source OR target warehouse
-      // This allows them to see:
-      // - DRAFT transfers from their warehouse (can dispatch)
-      // - IN_TRANSIT transfers to their warehouse (can receive)
-      query.$or = [
-        { sourceWarehouseId: { $in: warehouseObjectIds } },
-        { targetWarehouseId: { $in: warehouseObjectIds } },
-      ];
-    } else if (warehouseIds.length > 0) {
-      // Handle multiple warehouse IDs
-      const warehouseObjectIds = warehouseIds.map((id: string) => new mongoose.Types.ObjectId(id));
-      query.$or = [
-        { sourceWarehouseId: { $in: warehouseObjectIds } },
-        { targetWarehouseId: { $in: warehouseObjectIds } },
-      ];
-    }
+    const userRole = session.user.role;
+    const assignedWarehouses = session.user.assignedWarehouses || [];
 
-    if (status) {
-      query.status = status;
-    }
+    // Basic queries without Mongoose
+    let transfersSnapshot = await transfersRef.orderBy('createdAt', 'desc').limit(100).get();
+    let transfers = transfersSnapshot.docs.map((doc: any) => ({ _id: doc.id, id: doc.id, ...doc.data() }));
 
-    const transfers = await Transfer.find(query)
-      .populate('sourceWarehouseId', 'name code')
-      .populate('targetWarehouseId', 'name code')
-      .populate('requisitionId', 'requisitionNumber')
-      .populate('deliveryId', 'deliveryNumber')
-      .populate('createdBy', 'name email')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.sourceLocationId', 'name code')
-      .populate('lines.targetLocationId', 'name code')
-      .sort({ createdAt: -1 })
-      .limit(100);
+    // Apply filtering in memory (due to Firestore complex OR constraints)
+    transfers = transfers.filter((t: any) => {
+      let isMatch = true;
+
+      if (userRole === 'OPERATOR' && assignedWarehouses.length > 0 && warehouseIds.length === 0) {
+        isMatch = assignedWarehouses.includes(t.sourceWarehouseId) || assignedWarehouses.includes(t.targetWarehouseId);
+      } else if (warehouseIds.length > 0) {
+        isMatch = warehouseIds.includes(t.sourceWarehouseId) || warehouseIds.includes(t.targetWarehouseId);
+      }
+
+      if (status && t.status !== status) {
+        isMatch = false;
+      }
+
+      return isMatch;
+    });
+
+    // Manual population
+    transfers = await Promise.all(
+      transfers.map(async (t: any) => {
+        const [sourceWarehouse, targetWarehouse, createdByUser] = await Promise.all([
+          t.sourceWarehouseId ? getDocument<any>('warehouses', t.sourceWarehouseId) : null,
+          t.targetWarehouseId ? getDocument<any>('warehouses', t.targetWarehouseId) : null,
+          t.createdBy ? getDocument<any>('users', t.createdBy) : null,
+        ]);
+
+        return {
+          ...t,
+          sourceWarehouseId: sourceWarehouse || t.sourceWarehouseId,
+          targetWarehouseId: targetWarehouse || t.targetWarehouseId,
+          createdBy: createdByUser || t.createdBy,
+        };
+      })
+    );
 
     return NextResponse.json(transfers);
   } catch (error: any) {
@@ -75,18 +66,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    const userRole = (session.user as any)?.role;
-    // Only OPERATOR can create transfers
-    if (userRole !== 'OPERATOR') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const session = await getServerSessionFirebase();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
-
-    const body = await request.json();
     const {
       requisitionId,
       deliveryId,
@@ -94,19 +78,21 @@ export async function POST(request: NextRequest) {
       targetWarehouseId,
       lines,
       status,
-    } = body;
+    } = await request.json();
 
-    // If deliveryId is provided, use it to create transfer
+    const userRole = session.user.role;
+    if (userRole !== 'OPERATOR') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (deliveryId) {
-      const Delivery = (await import('@/lib/models/Delivery')).default;
-      const delivery = await Delivery.findById(deliveryId)
-        .populate('warehouseId', 'name code')
-        .populate('targetWarehouseId', 'name code')
-        .populate('requisitionId', 'requisitionNumber');
+      const deliveryDoc = await adminDb.collection('deliveries').doc(deliveryId).get();
 
-      if (!delivery) {
+      if (!deliveryDoc.exists) {
         return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
       }
+
+      const delivery = deliveryDoc.data()!;
 
       if (delivery.status !== 'READY') {
         return NextResponse.json(
@@ -115,13 +101,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Verify Operator has access to source warehouse
-      const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-      const sourceWarehouseIdStr = delivery.warehouseId._id.toString();
-      const hasAccess = assignedWarehouses.some((whId: any) => {
-        const whIdStr = whId?.toString ? whId.toString() : String(whId);
-        return whIdStr === sourceWarehouseIdStr;
-      });
+      const assignedWarehouses = session.user.assignedWarehouses || [];
+      const hasAccess = assignedWarehouses.includes(delivery.warehouseId);
       
       if (!hasAccess) {
         return NextResponse.json(
@@ -130,112 +111,52 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Create transfer from delivery
-      const count = await Transfer.countDocuments();
+      const snapshot = await adminDb.collection('transfers').count().get();
+      const count = snapshot.data().count;
       const transferNumber = `TRF-${String(count + 1).padStart(4, '0')}`;
 
-      const transfer = await Transfer.create({
+      const transferRef = await adminDb.collection('transfers').add({
         transferNumber,
-        requisitionId: delivery.requisitionId ? new mongoose.Types.ObjectId(delivery.requisitionId._id) : undefined,
-        deliveryId: new mongoose.Types.ObjectId(deliveryId),
-        sourceWarehouseId: new mongoose.Types.ObjectId(delivery.warehouseId._id),
-        targetWarehouseId: delivery.targetWarehouseId ? new mongoose.Types.ObjectId(delivery.targetWarehouseId._id) : new mongoose.Types.ObjectId(targetWarehouseId),
+        requisitionId: delivery.requisitionId || null,
+        deliveryId: deliveryId,
+        sourceWarehouseId: delivery.warehouseId,
+        targetWarehouseId: delivery.targetWarehouseId || targetWarehouseId,
         lines: delivery.lines.map((line: any) => ({
           productId: line.productId,
           quantity: line.quantity,
         })),
         status: 'DRAFT',
-        createdBy: new mongoose.Types.ObjectId((session.user as any).id),
+        createdBy: session.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
-      const populated = await Transfer.findById(transfer._id)
-        .populate('sourceWarehouseId', 'name code')
-        .populate('targetWarehouseId', 'name code')
-        .populate('requisitionId', 'requisitionNumber')
-        .populate('deliveryId', 'deliveryNumber')
-        .populate('createdBy', 'name email')
-        .populate('lines.productId', 'name sku')
-        .populate('lines.sourceLocationId', 'name code')
-        .populate('lines.targetLocationId', 'name code');
-
-      return NextResponse.json(populated, { status: 201 });
+      const newTransferDoc = await transferRef.get();
+      return NextResponse.json({ _id: newTransferDoc.id, ...newTransferDoc.data() }, { status: 201 });
     }
 
-    // Manual transfer creation (existing flow)
-    if (!sourceWarehouseId || !targetWarehouseId || !lines || lines.length === 0) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // Validate warehouses
-    const sourceWarehouse = await Warehouse.findById(sourceWarehouseId);
-    const targetWarehouse = await Warehouse.findById(targetWarehouseId);
-
-    if (!sourceWarehouse || !targetWarehouse) {
-      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
-    }
-
-    // Verify Operator has access to source warehouse
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-    const sourceWarehouseIdStr = sourceWarehouseId.toString();
-    const hasAccess = assignedWarehouses.some((whId: any) => {
-      const whIdStr = whId?.toString ? whId.toString() : String(whId);
-      return whIdStr === sourceWarehouseIdStr;
-    });
-    
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: 'You do not have access to the source warehouse' },
-        { status: 403 }
-      );
-    }
-
-    // If linked to requisition, validate it
-    if (requisitionId) {
-      const requisition = await Requisition.findById(requisitionId);
-      if (!requisition || requisition.status !== 'APPROVED') {
-        return NextResponse.json(
-          { error: 'Requisition must be APPROVED to create transfer' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Generate transfer number
-    const count = await Transfer.countDocuments();
+    // Default branch
+    const snapshot = await adminDb.collection('transfers').count().get();
+    const count = snapshot.data().count;
     const transferNumber = `TRF-${String(count + 1).padStart(4, '0')}`;
 
-    const transfer = await Transfer.create({
+    const transferRef = await adminDb.collection('transfers').add({
       transferNumber,
-      requisitionId: requisitionId ? new mongoose.Types.ObjectId(requisitionId) : undefined,
-      sourceWarehouseId: new mongoose.Types.ObjectId(sourceWarehouseId),
-      targetWarehouseId: new mongoose.Types.ObjectId(targetWarehouseId),
-      lines: lines.map((line: any) => ({
-        productId: new mongoose.Types.ObjectId(line.productId),
-        sourceLocationId: line.sourceLocationId
-          ? new mongoose.Types.ObjectId(line.sourceLocationId)
-          : undefined,
-        targetLocationId: line.targetLocationId
-          ? new mongoose.Types.ObjectId(line.targetLocationId)
-          : undefined,
-        quantity: line.quantity,
-      })),
-      status: status || 'DRAFT',
-      createdBy: new mongoose.Types.ObjectId((session.user as any).id),
+      sourceWarehouseId,
+      targetWarehouseId,
+      lines,
+      status: 'DRAFT',
+      createdBy: session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
-    const populated = await Transfer.findById(transfer._id)
-      .populate('sourceWarehouseId', 'name code')
-      .populate('targetWarehouseId', 'name code')
-      .populate('requisitionId', 'requisitionNumber')
-      .populate('deliveryId', 'deliveryNumber')
-      .populate('createdBy', 'name email')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.sourceLocationId', 'name code')
-      .populate('lines.targetLocationId', 'name code');
+    const newTransferDoc = await transferRef.get();
+    return NextResponse.json({ _id: newTransferDoc.id, ...newTransferDoc.data() }, { status: 201 });
 
-    return NextResponse.json(populated, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
 
+
+}

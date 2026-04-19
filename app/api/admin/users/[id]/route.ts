@@ -1,25 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import { requireRole } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session || session.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    await connectDB();
+    const doc = await adminDb.collection('users').doc(params.id).get();
 
-    const user = await User.findById(params.id)
-      .populate('assignedWarehouses', 'name code')
-      .populate('primaryWarehouseId', 'name code');
-
-    if (!user) {
+    if (!doc.exists) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const user: any = { id: doc.id, _id: doc.id, ...doc.data() };
+
+    // Populate assignedWarehouses & primaryWarehouseId
+    if (user.primaryWarehouseId) {
+      const wh = await adminDb.collection('warehouses').doc(user.primaryWarehouseId).get();
+      if (wh.exists) user.primaryWarehouseId = { id: wh.id, _id: wh.id, name: wh.data()?.name, code: wh.data()?.code };
+    }
+
+    if (user.assignedWarehouses && Array.isArray(user.assignedWarehouses)) {
+      const whs = await Promise.all(
+        user.assignedWarehouses.map(async (wid: string) => {
+          const w = await adminDb.collection('warehouses').doc(wid).get();
+          return w.exists ? { id: w.id, _id: w.id, name: w.data()?.name, code: w.data()?.code } : null;
+        })
+      );
+      user.assignedWarehouses = whs.filter(Boolean);
     }
 
     return NextResponse.json(user);
@@ -33,10 +47,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session || session.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await request.json();
     const {
@@ -47,9 +61,10 @@ export async function PUT(
       assignedWarehouses,
       primaryWarehouseId,
       password,
+      confirmManager
     } = body;
 
-    const updateData: any = {};
+    const updateData: any = { updatedAt: new Date() };
 
     // Validate warehouse assignment for operators and managers
     if (role && (role === 'OPERATOR' || role === 'MANAGER') && assignedWarehouses !== undefined) {
@@ -61,48 +76,44 @@ export async function PUT(
       }
     }
 
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
-    if (role !== undefined) updateData.role = role;
-    if (status !== undefined) updateData.status = status;
-    if (assignedWarehouses !== undefined) {
-      updateData.assignedWarehouses = assignedWarehouses.map(
-        (id: string) => new mongoose.Types.ObjectId(id)
-      );
+    const userRef = adminDb.collection('users').doc(params.id);
+    const existingDoc = await userRef.get();
+    
+    if (!existingDoc.exists) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    if (primaryWarehouseId !== undefined) {
-      updateData.primaryWarehouseId = primaryWarehouseId
-        ? new mongoose.Types.ObjectId(primaryWarehouseId)
-        : null;
-    }
-    if (password) {
-      const bcrypt = require('bcryptjs');
-      updateData.password = await bcrypt.hash(password, 10);
-    }
+    const existingUser = existingDoc.data();
 
     // If changing role to MANAGER, require confirmation
-    const existingUser = await User.findById(params.id);
-    if (existingUser && role === 'MANAGER' && existingUser.role !== 'MANAGER') {
-      if (!body.confirmManager) {
+    if (role === 'MANAGER' && existingUser?.role !== 'MANAGER') {
+      if (!confirmManager) {
         return NextResponse.json(
-          {
-            error:
-              'Changing role to MANAGER requires confirmation. Please set confirmManager: true in the request body.',
-          },
+          { error: 'Changing role to MANAGER requires confirmation. Please set confirmManager: true in the request body.' },
           { status: 400 }
         );
       }
     }
 
-    const user = await User.findByIdAndUpdate(params.id, updateData, { new: true })
-      .populate('assignedWarehouses', 'name code')
-      .populate('primaryWarehouseId', 'name code');
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (status !== undefined) updateData.status = status;
+    if (assignedWarehouses !== undefined) updateData.assignedWarehouses = assignedWarehouses;
+    if (primaryWarehouseId !== undefined) updateData.primaryWarehouseId = primaryWarehouseId ? primaryWarehouseId : null;
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (password) {
+      await adminAuth.updateUser(params.id, { password });
+    }
+    if (email !== undefined || name !== undefined) {
+      const authUpdates: any = {};
+      if (email !== undefined) authUpdates.email = email;
+      if (name !== undefined) authUpdates.displayName = name;
+      try { await adminAuth.updateUser(params.id, authUpdates); } catch(err) {}
     }
 
-    return NextResponse.json(user);
+    await userRef.update(updateData);
+    
+    return NextResponse.json({ id: params.id, ...existingUser, ...updateData });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -113,19 +124,21 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session || session.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    await connectDB();
+    await adminDb.collection('users').doc(params.id).update({
+      status: 'INACTIVE',
+      isActive: false,
+      updatedAt: new Date()
+    });
 
-    const user = await User.findByIdAndUpdate(
-      params.id,
-      { status: 'INACTIVE', isActive: false },
-      { new: true }
-    );
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    try {
+      await adminAuth.updateUser(params.id, { disabled: true });
+    } catch(err) {
+      console.error(err);
     }
 
     return NextResponse.json({ message: 'User deactivated' });
@@ -133,4 +146,3 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

@@ -1,85 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import { requireRole } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { NextRequest, NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
+import { getServerSessionFirebase } from "@/lib/firebase/auth-helper";
 
 export async function POST(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
-
-    const body = await request.json();
-    const { role, assignedWarehouses, primaryWarehouseId } = body;
-
-    if (!role || !assignedWarehouses || assignedWarehouses.length === 0) {
-      return NextResponse.json(
-        {
-          error: 'Role and assigned warehouse are required for approval',
-        },
-        { status: 400 }
-      );
+    const session = await getServerSessionFirebase();
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (assignedWarehouses.length !== 1) {
-      return NextResponse.json(
-        {
-          error: 'Operators and Managers can only be assigned to exactly one warehouse',
-        },
-        { status: 400 }
-      );
+    const { id } = params;
+    const docRef = adminDb.collection("users").doc(id);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (role !== 'MANAGER' && role !== 'OPERATOR') {
-      return NextResponse.json(
-        { error: 'Role must be MANAGER or OPERATOR' },
-        { status: 400 }
-      );
-    }
+    await docRef.update({
+      status: "ACTIVE",
+      updatedAt: new Date().toISOString(),
+    });
 
-    // If assigning MANAGER role, require confirmation
-    if (role === 'MANAGER' && !body.confirmManager) {
-      return NextResponse.json(
-        {
-          error:
-            'Assigning MANAGER role requires confirmation. Please set confirmManager: true in the request body.',
-        },
-        { status: 400 }
-      );
-    }
-
-    const updateData: any = {
-      status: 'ACTIVE',
-      role,
-      assignedWarehouses: assignedWarehouses.map(
-        (id: string) => new mongoose.Types.ObjectId(id)
-      ),
-      isActive: true,
-    };
-
-    if (primaryWarehouseId) {
-      updateData.primaryWarehouseId = new mongoose.Types.ObjectId(primaryWarehouseId);
-    } else if (assignedWarehouses.length === 1) {
-      // Auto-set primary warehouse if only one assigned
-      updateData.primaryWarehouseId = new mongoose.Types.ObjectId(assignedWarehouses[0]);
-    }
-
-    const user = await User.findByIdAndUpdate(params.id, updateData, { new: true })
-      .populate('assignedWarehouses', 'name code')
-      .populate('primaryWarehouseId', 'name code');
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(user);
+    return NextResponse.json({ message: "User approved successfully" });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error approving user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error.message },
+      { status: 500 }
+    );
   }
 }
-

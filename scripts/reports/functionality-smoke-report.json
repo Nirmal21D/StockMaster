@@ -1,0 +1,166 @@
+{
+  "generatedAt": "2026-04-19T15:18:01.116Z",
+  "baseUrl": "http://localhost:3000",
+  "options": {
+    "runMutationTests": true,
+    "timeoutMs": 12000
+  },
+  "summary": {
+    "total": 19,
+    "pass": 17,
+    "fail": 0,
+    "skip": 2
+  },
+  "results": [
+    {
+      "name": "Auth session check",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 57
+    },
+    {
+      "name": "Dashboard summary",
+      "method": "GET",
+      "path": "/api/dashboard",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 32
+    },
+    {
+      "name": "Dashboard cards",
+      "method": "GET",
+      "path": "/api/dashboard/summary",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 38
+    },
+    {
+      "name": "Products listing",
+      "method": "GET",
+      "path": "/api/products?limit=10",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 42
+    },
+    {
+      "name": "Warehouses listing",
+      "method": "GET",
+      "path": "/api/warehouses",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 54
+    },
+    {
+      "name": "Locations listing",
+      "method": "GET",
+      "path": "/api/locations",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 48
+    },
+    {
+      "name": "Requisitions listing",
+      "method": "GET",
+      "path": "/api/requisitions",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 47
+    },
+    {
+      "name": "Transfers listing",
+      "method": "GET",
+      "path": "/api/transfers",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 55
+    },
+    {
+      "name": "Receipts listing",
+      "method": "GET",
+      "path": "/api/receipts",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 44
+    },
+    {
+      "name": "Deliveries listing",
+      "method": "GET",
+      "path": "/api/deliveries",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 41
+    },
+    {
+      "name": "Ledger listing",
+      "method": "GET",
+      "path": "/api/ledger?limit=20",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 41
+    },
+    {
+      "name": "Analytics dashboard",
+      "method": "GET",
+      "path": "/api/analytics/dashboard",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 40
+    },
+    {
+      "name": "Analytics low stock",
+      "method": "GET",
+      "path": "/api/analytics/low-stock",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 52
+    },
+    {
+      "name": "Analytics slow stock",
+      "method": "GET",
+      "path": "/api/analytics/slow-stock",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 52
+    },
+    {
+      "name": "Analytics best source",
+      "method": "GET",
+      "path": "/api/analytics/best-source",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 37
+    },
+    {
+      "name": "Analytics stock health",
+      "method": "GET",
+      "path": "/api/analytics/stock-health",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 40
+    },
+    {
+      "name": "Analytics stockouts",
+      "method": "GET",
+      "path": "/api/analytics/stockouts",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 42
+    },
+    {
+      "name": "Stock by product/warehouse",
+      "method": "GET",
+      "path": "/api/stock?productId=&warehouseId=",
+      "status": "SKIP",
+      "reason": "Missing env: STOCK_PRODUCT_ID, STOCK_WAREHOUSE_ID"
+    },
+    {
+      "name": "Product CRUD workflow",
+      "method": "POST",
+      "path": "/api/products",
+      "status": "SKIP",
+      "reason": "SESSION_COOKIE is required for mutation workflow"
+    }
+  ]
+}

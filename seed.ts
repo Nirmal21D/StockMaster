@@ -4,270 +4,280 @@ import path from 'path';
 // Load environment variables from .env.local
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import connectDB from './lib/mongodb';
-import User from './lib/models/User';
-import Warehouse from './lib/models/Warehouse';
-import Location from './lib/models/Location';
-import Product from './lib/models/Product';
-import StockLevel from './lib/models/StockLevel';
-
 async function seed() {
   try {
-    await connectDB();
-    console.log('Connected to MongoDB');
+    const { adminDb, adminAuth } = await import('./lib/firebase/admin');
+    
+    console.log('Connecting to Firebase and clearing old data...');
 
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    await User.deleteMany({});
-    await Warehouse.deleteMany({});
-    await Location.deleteMany({});
-    await Product.deleteMany({});
-    await StockLevel.deleteMany({});
+    // Optionally delete old users from Auth to avoid conflicts
+    const listUsersResult = await adminAuth.listUsers(1000);
+    if (listUsersResult.users.length > 0) {
+        await adminAuth.deleteUsers(listUsersResult.users.map(u => u.uid));
+        console.log(`Deleted ${listUsersResult.users.length} existing users from Firebase Auth.`);
+    }
 
-    // Create users
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    // Function to delete all docs in a collection
+    const deleteCollection = async (collectionPath: string) => {
+        const snapshot = await adminDb.collection(collectionPath).get();
+        const batch = adminDb.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        console.log(`Cleared collection: ${collectionPath}`);
+    };
 
-    const admin = await User.findOneAndUpdate(
-      { email: 'admin@stockmaster.com' },
+    await deleteCollection('users');
+    await deleteCollection('warehouses');
+    await deleteCollection('locations');
+    await deleteCollection('products');
+    await deleteCollection('stockLevels');
+    await deleteCollection('receipts');
+    await deleteCollection('deliveries');
+    await deleteCollection('requisitions');
+    await deleteCollection('transfers');
+    
+    console.log('\n--- Creating Data ---');
+
+    // 1. Create Users
+    const usersData = [
       {
-        name: 'Admin User',
         email: 'admin@stockmaster.com',
-        password: hashedPassword,
-        role: 'ADMIN',
-        status: 'ACTIVE',
-        isActive: true,
-        assignedWarehouses: [],
+        password: 'password123',
+        name: 'Admin User',
+        role: 'ADMIN'
       },
-      { upsert: true, new: true }
-    );
-
-    const operator = await User.findOneAndUpdate(
-      { email: 'operator@stockmaster.com' },
       {
-        name: 'Operator User',
-        email: 'operator@stockmaster.com',
-        password: hashedPassword,
-        role: 'OPERATOR',
-        status: 'ACTIVE',
-        isActive: true,
-        assignedWarehouses: [],
-      },
-      { upsert: true, new: true }
-    );
-
-    const manager = await User.findOneAndUpdate(
-      { email: 'manager@stockmaster.com' },
-      {
-        name: 'Manager User',
         email: 'manager@stockmaster.com',
-        password: hashedPassword,
-        role: 'MANAGER',
+        password: 'password123',
+        name: 'Manager User',
+        role: 'MANAGER'
+      },
+      {
+        email: 'operator@stockmaster.com',
+        password: 'password123',
+        name: 'Operator User',
+        role: 'OPERATOR'
+      }
+    ];
+
+    const userPromises = usersData.map(async (u) => {
+      const userRecord = await adminAuth.createUser({
+        email: u.email,
+        password: u.password,
+        displayName: u.name,
+      });
+      const userDoc = {
+        name: u.name,
+        email: u.email,
+        role: u.role,
         status: 'ACTIVE',
         isActive: true,
         assignedWarehouses: [],
-      },
-      { upsert: true, new: true }
-    );
+        primaryWarehouseId: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await adminDb.collection('users').doc(userRecord.uid).set(userDoc);
+      return { id: userRecord.uid, ...u };
+    });
 
-    console.log('Users created:', { admin: admin.email, operator: operator.email, manager: manager.email });
+    const [admin, manager, operator] = await Promise.all(userPromises);
+    console.log('Created Users:', { admin: admin.email, manager: manager.email, operator: operator.email });
 
-    // Create warehouses
-    const warehouse1 = await Warehouse.findOneAndUpdate(
-      { code: 'WH_MUM' },
-      {
-        name: 'Mumbai Central',
-        code: 'WH_MUM',
-        address: 'Mumbai, Maharashtra',
-        description: 'Main warehouse in Mumbai',
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    // 2. Create Warehouses
+    const warehouse1Ref = await adminDb.collection('warehouses').add({
+      name: 'Mumbai Central',
+      code: 'WH_MUM',
+      location: 'Mumbai, Maharashtra',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    const warehouse2Ref = await adminDb.collection('warehouses').add({
+      name: 'Pune Store',
+      code: 'WH_PUNE',
+      location: 'Pune, Maharashtra',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
-    const warehouse2 = await Warehouse.findOneAndUpdate(
-      { code: 'WH_PUNE' },
-      {
-        name: 'Pune Store',
-        code: 'WH_PUNE',
-        address: 'Pune, Maharashtra',
-        description: 'Secondary warehouse in Pune',
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    console.log(`Created Warehouses: Mumbai(${warehouse1Ref.id}), Pune(${warehouse2Ref.id})`);
 
-    console.log('Warehouses created:', warehouse1.name, warehouse2.name);
+    // 3. Create Locations
+    const loc1Ref = await adminDb.collection('locations').add({
+      warehouseId: warehouse1Ref.id,
+      name: 'Rack A - Shelf 1',
+      code: 'RACK-A-1',
+      description: 'Main storage rack',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
-    // Create locations
-    const location1 = await Location.findOneAndUpdate(
-      { warehouseId: warehouse1._id, name: 'Rack A - Shelf 1' },
-      {
-        warehouseId: warehouse1._id,
-        name: 'Rack A - Shelf 1',
-        code: 'RACK-A-1',
-        description: 'Main storage rack',
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    const loc2Ref = await adminDb.collection('locations').add({
+      warehouseId: warehouse1Ref.id,
+      name: 'Rack B - Shelf 2',
+      code: 'RACK-B-2',
+      description: 'Secondary storage rack',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
-    const location2 = await Location.findOneAndUpdate(
-      { warehouseId: warehouse1._id, name: 'Rack B - Shelf 2' },
-      {
-        warehouseId: warehouse1._id,
-        name: 'Rack B - Shelf 2',
-        code: 'RACK-B-2',
-        description: 'Secondary storage rack',
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    const loc3Ref = await adminDb.collection('locations').add({
+      warehouseId: warehouse2Ref.id,
+      name: 'Storage Room 1',
+      code: 'ROOM-1',
+      description: 'Main storage room',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
-    const location3 = await Location.findOneAndUpdate(
-      { warehouseId: warehouse2._id, name: 'Storage Room 1' },
-      {
-        warehouseId: warehouse2._id,
-        name: 'Storage Room 1',
-        code: 'ROOM-1',
-        description: 'Main storage room',
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    console.log('Created Locations');
 
-    console.log('Locations created');
-
-    // Create products
-    const products = [
-      {
-        name: 'Desk',
-        sku: 'DESK001',
-        category: 'Furniture',
-        unit: 'pcs',
-        price: 3000,
-        reorderLevel: 10,
-        abcClass: 'A' as const,
-      },
-      {
-        name: 'Table',
-        sku: 'TABLE001',
-        category: 'Furniture',
-        unit: 'pcs',
-        price: 3000,
-        reorderLevel: 15,
-        abcClass: 'A' as const,
-      },
-      {
-        name: 'Chair',
-        sku: 'CHAIR001',
-        category: 'Furniture',
-        unit: 'pcs',
-        price: 1500,
-        reorderLevel: 20,
-        abcClass: 'B' as const,
-      },
-      {
-        name: 'Lamp',
-        sku: 'LAMP001',
-        category: 'Lighting',
-        unit: 'pcs',
-        price: 500,
-        reorderLevel: 30,
-        abcClass: 'C' as const,
-      },
-      {
-        name: 'Monitor',
-        sku: 'MON001',
-        category: 'Electronics',
-        unit: 'pcs',
-        price: 8000,
-        reorderLevel: 5,
-        abcClass: 'A' as const,
-      },
+    // 4. Create Products
+    const productsData = [
+      { name: 'Desk', sku: 'DESK001', categoryId: 'Furniture', unit: 'pcs', price: 3000, reorderLevel: 10, abcClass: 'A' },
+      { name: 'Table', sku: 'TABLE001', categoryId: 'Furniture', unit: 'pcs', price: 3000, reorderLevel: 15, abcClass: 'A' },
+      { name: 'Chair', sku: 'CHAIR001', categoryId: 'Furniture', unit: 'pcs', price: 1500, reorderLevel: 20, abcClass: 'B' },
+      { name: 'Lamp', sku: 'LAMP001', categoryId: 'Lighting', unit: 'pcs', price: 500, reorderLevel: 30, abcClass: 'C' },
+      { name: 'Monitor', sku: 'MON001', categoryId: 'Electronics', unit: 'pcs', price: 8000, reorderLevel: 5, abcClass: 'A' },
     ];
 
-    const createdProducts = [];
-    for (const productData of products) {
-      const product = await Product.findOneAndUpdate(
-        { sku: productData.sku },
-        productData,
-        { upsert: true, new: true }
-      );
-      createdProducts.push(product);
+    const productRefs = [];
+    for (const p of productsData) {
+      const pRef = await adminDb.collection('products').add({
+        ...p,
+        description: `High quality ${p.name}`,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      productRefs.push(pRef);
     }
+    console.log(`Created ${productRefs.length} Products`);
 
-    console.log('Products created:', createdProducts.length);
-
-    // Create stock levels
+    // 5. Create Stock Levels
     const stockLevels = [
-      {
-        productId: createdProducts[0]._id, // Desk
-        warehouseId: warehouse1._id,
-        locationId: location1._id,
-        quantity: 50,
-      },
-      {
-        productId: createdProducts[0]._id, // Desk
-        warehouseId: warehouse2._id,
-        locationId: location3._id,
-        quantity: 30,
-      },
-      {
-        productId: createdProducts[1]._id, // Table
-        warehouseId: warehouse1._id,
-        locationId: location1._id,
-        quantity: 50,
-      },
-      {
-        productId: createdProducts[1]._id, // Table
-        warehouseId: warehouse2._id,
-        locationId: location3._id,
-        quantity: 25,
-      },
-      {
-        productId: createdProducts[2]._id, // Chair
-        warehouseId: warehouse1._id,
-        locationId: location2._id,
-        quantity: 100,
-      },
-      {
-        productId: createdProducts[3]._id, // Lamp
-        warehouseId: warehouse1._id,
-        locationId: location2._id,
-        quantity: 200,
-      },
-      {
-        productId: createdProducts[4]._id, // Monitor
-        warehouseId: warehouse1._id,
-        locationId: location1._id,
-        quantity: 15,
-      },
+      { productId: productRefs[0].id, warehouseId: warehouse1Ref.id, locationId: loc1Ref.id, quantity: 50, updatedAt: new Date() },
+      { productId: productRefs[0].id, warehouseId: warehouse2Ref.id, locationId: loc3Ref.id, quantity: 30, updatedAt: new Date() },
+      { productId: productRefs[1].id, warehouseId: warehouse1Ref.id, locationId: loc1Ref.id, quantity: 50, updatedAt: new Date() },
+      { productId: productRefs[1].id, warehouseId: warehouse2Ref.id, locationId: loc3Ref.id, quantity: 25, updatedAt: new Date() },
+      { productId: productRefs[2].id, warehouseId: warehouse1Ref.id, locationId: loc2Ref.id, quantity: 100, updatedAt: new Date() },
+      { productId: productRefs[3].id, warehouseId: warehouse1Ref.id, locationId: loc2Ref.id, quantity: 200, updatedAt: new Date() },
+      { productId: productRefs[4].id, warehouseId: warehouse1Ref.id, locationId: loc1Ref.id, quantity: 15, updatedAt: new Date() },
     ];
 
-    for (const stockData of stockLevels) {
-      await StockLevel.findOneAndUpdate(
-        {
-          productId: stockData.productId,
-          warehouseId: stockData.warehouseId,
-          locationId: stockData.locationId || null,
-        },
-        {
-          $set: { quantity: stockData.quantity },
-        },
-        { upsert: true, new: true }
-      );
+    for (const sl of stockLevels) {
+      const stockId = `${sl.productId}_${sl.warehouseId}_${sl.locationId}`;
+      await adminDb.collection('stockLevels').doc(stockId).set(sl);
     }
+    console.log(`Created ${stockLevels.length} Stock Levels`);
 
-    console.log('Stock levels created:', stockLevels.length);
+    // 6. Create Receipts (Incoming Stock)
+    const receiptsData = [
+      {
+        receiptNumber: 'REC-2026-001',
+        supplierName: 'Furniture Corp',
+        warehouseId: warehouse1Ref.id,
+        status: 'DONE',
+        reference: 'INV-101',
+        notes: 'Initial stock intake',
+        lines: [
+          { productId: productRefs[0].id, locationId: loc1Ref.id, quantity: 50 },
+          { productId: productRefs[2].id, locationId: loc2Ref.id, quantity: 100 }
+        ],
+        createdBy: admin.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    for (const r of receiptsData) {
+      await adminDb.collection('receipts').add(r);
+    }
+    console.log(`Created ${receiptsData.length} Receipts`);
+
+    // 7. Create Deliveries (Outgoing Stock)
+    const deliveriesData = [
+      {
+        deliveryNumber: 'DEL-2026-001',
+        customerName: 'Tech Hub Office',
+        warehouseId: warehouse1Ref.id,
+        status: 'WAITING',
+        reference: 'SO-992',
+        notes: 'Pending delivery for office setup',
+        lines: [
+          { productId: productRefs[0].id, fromLocationId: loc1Ref.id, quantity: 5 },
+          { productId: productRefs[4].id, fromLocationId: loc1Ref.id, quantity: 2 }
+        ],
+        createdBy: manager.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    for (const d of deliveriesData) {
+      await adminDb.collection('deliveries').add(d);
+    }
+    console.log(`Created ${deliveriesData.length} Deliveries`);
+
+    // 8. Create Transfers (Location to Location)
+    const transfersData = [
+      {
+        transferNumber: 'TRF-2026-001',
+        status: 'DRAFT',
+        notes: 'Moving some chairs to Pune',
+        sourceWarehouseId: warehouse1Ref.id,
+        targetWarehouseId: warehouse2Ref.id,
+        lines: [
+          { productId: productRefs[2].id, sourceLocationId: loc2Ref.id, targetLocationId: loc3Ref.id, quantity: 20 }
+        ],
+        createdBy: admin.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    for (const t of transfersData) {
+      await adminDb.collection('transfers').add(t);
+    }
+    console.log(`Created ${transfersData.length} Transfers`);
+
+    // 9. Create Requisitions
+    const requisitionsData = [
+      {
+        requisitionNumber: 'REQ-2026-001',
+        status: 'PENDING',
+        notes: 'Need more lamps for the showroom',
+        requestingWarehouseId: warehouse2Ref.id,
+        lines: [
+          { productId: productRefs[3].id, quantityRequested: 50 }
+        ],
+        createdBy: operator.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    for (const req of requisitionsData) {
+      await adminDb.collection('requisitions').add(req);
+    }
+    console.log(`Created ${requisitionsData.length} Requisitions`);
 
     console.log('\n✅ Seed completed successfully!');
     console.log('\nLogin credentials:');
     console.log('Admin: admin@stockmaster.com / password123');
-    console.log('Operator: operator@stockmaster.com / password123');
     console.log('Manager: manager@stockmaster.com / password123');
-
+    console.log('Operator: operator@stockmaster.com / password123');
+    
     process.exit(0);
+
   } catch (error) {
     console.error('Seed error:', error);
     process.exit(1);
@@ -275,4 +285,3 @@ async function seed() {
 }
 
 seed();
-

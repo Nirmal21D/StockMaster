@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import Chatbot from './Chatbot';
 
 export default function ChatbotButton() {

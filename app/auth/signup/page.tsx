@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase/client'; // Adjust path if necessary
 
 export default function SignUpPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
+    loginId: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -21,8 +25,13 @@ export default function SignUpPage() {
       return false;
     }
 
-    if (formData.email.length < 6 || formData.email.length > 12) {
-      setError('Email must be between 6-12 characters');
+    if (formData.loginId.length < 6 || formData.loginId.length > 12) {
+      setError('Login ID must be between 6-12 characters');
+      return false;
+    }
+
+    if (!formData.email.includes('@')) {
+      setError('Please enter a valid email address');
       return false;
     }
 
@@ -65,11 +74,40 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      // Note: In a real app, you'd create a signup API endpoint
-      // For now, this is a placeholder
-      setError('Sign up functionality requires backend API endpoint');
+      // 1. Create the user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      
+      const user = userCredential.user;
+
+      // 2. Update their profile name
+      await updateProfile(user, { displayName: formData.name });
+
+      // 3. Save additional user properties to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        name: formData.name,
+        loginId: formData.loginId,
+        email: formData.email,
+        role: 'user', // Default role
+        createdAt: serverTimestamp(),
+      });
+
+      // Redirect upon successful registration
+      router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      let errorMessage = 'An error occurred. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak.';
+      } else {
+        errorMessage = err.message || errorMessage;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,14 +144,14 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="loginId" className="block text-sm font-medium text-foreground mb-2">
               Enter Login ID (6-12 characters)
             </label>
             <input
-              id="email"
+              id="loginId"
               type="text"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={formData.loginId}
+              onChange={(e) => setFormData({ ...formData, loginId: e.target.value })}
               required
               minLength={6}
               maxLength={12}
@@ -123,11 +161,11 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="emailField" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
               Enter Email Id
             </label>
             <input
-              id="emailField"
+              id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}

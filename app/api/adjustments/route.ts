@@ -1,44 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Adjustment from '@/lib/models/Adjustment';
-import StockLevel from '@/lib/models/StockLevel';
-import { requireAuth } from '@/lib/middleware';
-import { updateStock } from '@/lib/services/stockService';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb, admin } from '@/lib/firebase/admin';
+import { getDocument } from '@/lib/firebase/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
     const productId = searchParams.get('productId');
 
-    const query: any = {};
+    let query: admin.firestore.Query = adminDb.collection('adjustments');
 
     // For Operators, filter by assigned warehouses
-    const userRole = (session.user as any)?.role;
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    const userRole = session.user?.role;
+    const assignedWarehouses = session.user?.assignedWarehouses || [];
+    
     if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
-      query.warehouseId = { $in: assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id)) };
+      query = query.where('warehouseId', 'in', assignedWarehouses);
     } else if (warehouseId) {
-      query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
+      query = query.where('warehouseId', '==', warehouseId);
     }
 
     if (productId) {
-      query.productId = new mongoose.Types.ObjectId(productId);
+      query = query.where('productId', '==', productId);
     }
 
-    const adjustments = await Adjustment.find(query)
-      .populate('productId', 'name sku')
-      .populate('warehouseId', 'name code')
-      .populate('locationId', 'name code')
-      .populate('createdBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(100);
+    const snapshot = await query.orderBy('createdAt', 'desc').limit(100).get();
+
+    const adjustments = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        
+        const [product, warehouse, location, createdBy] = await Promise.all([
+          data.productId ? getDocument<any>('products', data.productId) : null,
+          data.warehouseId ? getDocument<any>('warehouses', data.warehouseId) : null,
+          data.locationId ? getDocument<any>('locations', data.locationId) : null,
+          data.createdBy ? getDocument<any>('users', data.createdBy) : null,
+        ]);
+
+        return {          _id: doc.id,          id: doc.id,
+          ...data,
+          productId: product || { id: data.productId },
+          warehouseId: warehouse || { id: data.warehouseId },
+          locationId: location || { id: data.locationId },
+          createdBy: createdBy || { id: data.createdBy },
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt
+        };
+      })
+    );
 
     return NextResponse.json(adjustments);
   } catch (error: any) {
@@ -48,10 +60,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const { productId, warehouseId, locationId, newQuantity, reason, remarks } = body;
@@ -61,8 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     // For Operators, verify they have access to this warehouse
-    const userRole = (session.user as any)?.role;
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    const userRole = session.user?.role;
+    const assignedWarehouses = session.user?.assignedWarehouses || [];
     if (userRole === 'OPERATOR' && !assignedWarehouses.includes(warehouseId)) {
       return NextResponse.json(
         { error: 'You do not have access to this warehouse' },
@@ -70,56 +80,99 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get current stock level
-    const stockLevel = await StockLevel.findOne({
-      productId: new mongoose.Types.ObjectId(productId),
-      warehouseId: new mongoose.Types.ObjectId(warehouseId),
-      locationId: locationId ? new mongoose.Types.ObjectId(locationId) : null,
+    // Generate adjustment number (use timestamp to avoid race collision since count is not transaction-safe)
+    const countSnapshot = await adminDb.collection('adjustments').count().get();
+    const fallbackId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const count = countSnapshot.data().count;
+    const adjustmentNumber = `ADJ-${String(count + 1).padStart(4, '0')}-${fallbackId}`;
+
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
+    const userId = session.user.id; 
+
+    // Execute in transaction to ensure stock levels and movements match
+    const adjustmentRefDoc = adminDb.collection('adjustments').doc();
+    let populatedAdjustment: any = null;
+
+    await adminDb.runTransaction(async (t) => {
+      let stockQuery = adminDb.collection('stockLevels')
+        .where('productId', '==', productId)
+        .where('warehouseId', '==', warehouseId);
+        
+      if (locationId) {
+        stockQuery = stockQuery.where('locationId', '==', locationId);
+      }
+
+      const stockSnapshot = await t.get(stockQuery);
+      let oldQuantity = 0;
+      let stockLevelDocRef = stockSnapshot.empty ? adminDb.collection('stockLevels').doc() : stockSnapshot.docs[0].ref;
+
+      if (!stockSnapshot.empty) {
+        oldQuantity = stockSnapshot.docs[0].data().quantity || 0;
+      }
+
+      const difference = newQuantity - oldQuantity;
+
+      const adjustmentData = {
+        adjustmentNumber,
+        productId,
+        warehouseId,
+        locationId: locationId || null,
+        oldQuantity,
+        newQuantity,
+        difference,
+        reason,
+        remarks,
+        createdBy: userId,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      t.set(adjustmentRefDoc, adjustmentData);
+
+      if (stockSnapshot.empty) {
+        t.set(stockLevelDocRef, {
+          productId,
+          warehouseId,
+          locationId: locationId || null,
+          quantity: newQuantity,
+          lastUpdated: timestamp
+        });
+      } else {
+        t.update(stockLevelDocRef, {
+          quantity: newQuantity,
+          lastUpdated: timestamp
+        });
+      }
+
+      const movementRef = adminDb.collection('stockMovements').doc();
+      t.set(movementRef, {
+        type: 'ADJUSTMENT',
+        reason: 'ADJUSTMENT',
+        productId,
+        warehouseFromId: warehouseId,
+        warehouseToId: warehouseId,
+        locationFromId: locationId || null,
+        locationToId: locationId || null,
+        quantity: difference,
+        referenceId: adjustmentRefDoc.id,
+        createdBy: userId,
+        createdAt: timestamp
+      });
+      
+      populatedAdjustment = {
+        id: adjustmentRefDoc.id,
+        ...adjustmentData
+      };
     });
 
-    const oldQuantity = stockLevel?.quantity || 0;
-    const difference = newQuantity - oldQuantity;
+    populatedAdjustment.productId = await getDocument<any>('products', productId);
+    populatedAdjustment.warehouseId = await getDocument<any>('warehouses', warehouseId);
+    populatedAdjustment.locationId = locationId ? await getDocument<any>('locations', locationId) : null;
+    populatedAdjustment.createdBy = await getDocument<any>('users', userId);
+    populatedAdjustment.createdAt = new Date();
 
-    // Generate adjustment number
-    const count = await Adjustment.countDocuments();
-    const adjustmentNumber = `ADJ-${String(count + 1).padStart(4, '0')}`;
-
-    // Create adjustment
-    const adjustment = await Adjustment.create({
-      adjustmentNumber,
-      productId: new mongoose.Types.ObjectId(productId),
-      warehouseId: new mongoose.Types.ObjectId(warehouseId),
-      locationId: locationId ? new mongoose.Types.ObjectId(locationId) : undefined,
-      oldQuantity,
-      newQuantity,
-      difference,
-      reason,
-      remarks,
-      createdBy: new mongoose.Types.ObjectId((session.user as any).id),
-    });
-
-    // Update stock level and create ledger entry
-    const userId = new mongoose.Types.ObjectId((session.user as any).id);
-    await updateStock(
-      adjustment.productId,
-      adjustment.warehouseId,
-      adjustment.locationId,
-      difference,
-      'ADJUSTMENT',
-      'ADJUSTMENT',
-      new mongoose.Types.ObjectId(adjustment._id.toString()),
-      userId
-    );
-
-    const populated = await Adjustment.findById(adjustment._id)
-      .populate('productId', 'name sku')
-      .populate('warehouseId', 'name code')
-      .populate('locationId', 'name code')
-      .populate('createdBy', 'name email');
-
-    return NextResponse.json(populated, { status: 201 });
+    return NextResponse.json(populatedAdjustment, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

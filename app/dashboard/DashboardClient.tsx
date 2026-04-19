@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown, Settings, Users, Warehouse } from 'lucide-react';
+import { useSession } from '@/components/AuthProvider';
+import { Package, AlertTriangle, FileText, Truck, Clock, TrendingDown, Users, Warehouse } from 'lucide-react';
 import Link from 'next/link';
-import AnalyticsDashboard from '@/components/AnalyticsDashboard';
+import LiveRiskTicker from '@/components/LiveRiskTicker';
+import ControlTowerMap from '@/components/ControlTowerMap';
 
 interface DashboardData {
   totalSKUs: number;
@@ -14,6 +15,9 @@ interface DashboardData {
   pendingTransfers: number;
   slowDeadStockCount: number;
   stockoutEvents: number;
+  revenueAtRisk: number;
+  impactedOrdersCount: number;
+  vendorDiversificationIndex: number;
 }
 
 interface KPICardProps {
@@ -90,20 +94,16 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
     }
   }, [userRole, primaryWarehouseId, assignedWarehouses]);
 
-  // Get warehouse ID from URL params - memoized to prevent unnecessary re-renders
   const warehouseId = useMemo(() => {
     return searchParams.get('warehouse') || '';
   }, [searchParams]);
 
-  // Fetch dashboard data only when warehouseId changes
   useEffect(() => {
-    // If no warehouse selected, use initial data
     if (!warehouseId) {
       setData(initialData);
       return;
     }
 
-    // Fetch data for selected warehouse
     let cancelled = false;
     setLoading(true);
 
@@ -132,17 +132,78 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
 
   return (
     <div className="space-y-6">
+      {userRole === 'ADMIN' && (
+        <div className="-mx-4 md:-mx-8 -mt-8 mb-6">
+          <LiveRiskTicker />
+        </div>
+      )}
+
       {loading && (
         <div className="text-center text-muted-foreground py-4">Loading dashboard data...</div>
       )}
 
       {userRole === 'MANAGER' && managerWarehouse && (
-        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-3 backdrop-blur-sm">
-          <Package className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground font-medium">Your Center</p>
-            <p className="text-lg text-foreground font-semibold">{managerWarehouse.name} ({managerWarehouse.code})</p>
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Package className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground font-medium">Your Center</p>
+              <p className="text-lg text-foreground font-semibold">{managerWarehouse.name} ({managerWarehouse.code})</p>
+            </div>
           </div>
+          <Link 
+            href={`/dashboard/warehouses/${primaryWarehouseId || assignedWarehouses[0]}/docks`}
+            className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary font-bold rounded-lg transition-all"
+          >
+            <Clock className="w-4 h-4" />
+            Manage Site Docks
+          </Link>
+        </div>
+      )}
+
+      {userRole === 'ADMIN' && (
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-blue-500/5 blur-[100px] pointer-events-none -z-10"></div>
+          <ControlTowerMap />
+        </div>
+      )}
+
+      {userRole === 'ADMIN' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+           {/* REVENUE AT RISK */}
+           <div className="relative group overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-red-600 to-rose-700 shadow-2xl shadow-red-500/20">
+              <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:scale-110 transition-transform">
+                 <AlertTriangle className="w-24 h-24" />
+              </div>
+              <p className="text-xs font-black text-rose-100 uppercase tracking-widest mb-1">Revenue at Risk (Active)</p>
+              <h4 className="text-4xl font-black text-white">${data.revenueAtRisk?.toLocaleString()}</h4>
+              <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-rose-200 uppercase bg-black/10 w-fit px-3 py-1 rounded-full border border-white/10">
+                 <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                 Potential Network Loss
+              </div>
+           </div>
+
+           {/* IMPACTED ORDERS */}
+           <div className="relative group overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-blue-600 to-indigo-700 shadow-2xl shadow-blue-500/20">
+              <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:scale-110 transition-transform">
+                 <Package className="w-24 h-24" />
+              </div>
+              <p className="text-xs font-black text-blue-100 uppercase tracking-widest mb-1">Impacted Order Lines</p>
+              <h4 className="text-4xl font-black text-white">{data.impactedOrdersCount}</h4>
+              <p className="mt-4 text-[10px] font-black text-blue-200 uppercase tracking-tighter">Awaiting Mitigation Execution</p>
+           </div>
+
+           {/* VENDOR DIVERSIFICATION */}
+           <div className="relative group overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-emerald-600 to-teal-700 shadow-2xl shadow-emerald-500/20">
+              <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:scale-110 transition-transform">
+                 <Warehouse className="w-24 h-24" />
+              </div>
+              <p className="text-xs font-black text-emerald-100 uppercase tracking-widest mb-1">Network Resilience Index</p>
+              <h4 className="text-4xl font-black text-white">{data.vendorDiversificationIndex}%</h4>
+              <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-emerald-100 uppercase bg-white/10 w-fit px-3 py-1 rounded-full">
+                 {data.vendorDiversificationIndex > 70 ? 'Optimal Diversification' : 'High Concentration Risk'}
+              </div>
+           </div>
         </div>
       )}
 
@@ -192,7 +253,8 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       </div>
 
       {/* Role-specific Quick Links */}
-      <div className="mt-8 bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg">
+      <div className="mt-8 bg-card/50 backdrop-blur-xl rounded-xl border border-black/10 dark:border-white/10 p-6 shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -z-10"></div>
         <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {userRole === 'ADMIN' && (
@@ -227,6 +289,21 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
                   <div className="text-sm text-muted-foreground">Create new product master data</div>
                 </div>
               </Link>
+              <button
+                onClick={async () => {
+                  if (confirm('Recompute reliability scores for all vendors based on historical data?')) {
+                    const res = await fetch('/api/admin/recompute-reliability', { method: 'POST' });
+                    if (res.ok) {
+                      const result = await res.json();
+                      alert(`Reliability scores updated for ${result.details?.length || 0} vendors.`);
+                    }
+                  }
+                }}
+                className="col-span-1 md:col-span-2 lg:col-span-3 mt-4 flex items-center justify-center gap-2 p-3 bg-blue-500/10 border border-blue-500/30 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-all font-bold"
+              >
+                <TrendingDown className="w-4 h-4 rotate-180" />
+                RECOMPUTE GLOBAL VENDOR RELIABILITY SCORES
+              </button>
             </>
           )}
           
@@ -304,4 +381,3 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
     </div>
   );
 }
-

@@ -1,31 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import { requireRole } from '@/lib/middleware';
+import { NextRequest, NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
+import { getServerSessionFirebase } from "@/lib/firebase/auth-helper";
 
 export async function POST(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireRole(request, ['ADMIN']);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
-
-    const user = await User.findByIdAndUpdate(
-      params.id,
-      { status: 'INACTIVE', isActive: false },
-      { new: true }
-    );
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const session = await getServerSessionFirebase();
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json({ message: 'User rejected and deactivated', user });
+    const { id } = params;
+    const docRef = adminDb.collection("users").doc(id);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    await docRef.update({
+      status: "REJECTED",
+      updatedAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ message: "User rejected successfully" });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error rejecting user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error.message },
+      { status: 500 }
+    );
   }
 }
-

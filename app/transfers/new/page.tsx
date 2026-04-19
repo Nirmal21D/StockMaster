@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Product {
   _id: string;
   name: string;

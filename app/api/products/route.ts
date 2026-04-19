@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Product from '@/lib/models/Product';
-import StockLevel from '@/lib/models/StockLevel';
-import { requireAuth, requireRole } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getCollection, addDocument } from '@/lib/firebase/db';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -19,49 +17,68 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    const query: any = { isActive: true };
+    let productsRef: any = adminDb.collection('products').where('isActive', '==', true);
+    
+    if (category) {
+      productsRef = productsRef.where('category', '==', category);
+    }
+    
+    if (abcClass) {
+      productsRef = productsRef.where('abcClass', '==', abcClass);
+    }
+
+    // Since Firebase doesn't support generic text search and pagination like mongo easily,
+    // we'll fetch products and do filtering/pagination in memory for now.
+    const snapshot = await productsRef.get();
+    let products = snapshot.docs.map((doc: any) => ({
+      ...doc.data(),
+      id: doc.id,
+      _id: doc.id,
+    }));
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
-      ];
+      const searchLower = search.toLowerCase();
+      products = products.filter((p: any) => 
+        (p.name?.toLowerCase().includes(searchLower)) || 
+        (p.sku?.toLowerCase().includes(searchLower))
+      );
     }
 
-    if (category) {
-      query.category = category;
-    }
+    const total = products.length;
 
-    if (abcClass) {
-      query.abcClass = abcClass;
-    }
+    // Apply sorting and pagination in memory
+    products = products
+      .sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+      .slice((page - 1) * limit, page * limit);
 
-    const products = await Product.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip((page - 1) * limit);
-
-    const total = await Product.countDocuments(query);
-
-    // Get warehouse filter for Operators
-    const userRole = (session.user as any)?.role;
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-    let warehouseFilter: mongoose.Types.ObjectId[] | null = null;
+    // Get warehouse filter for Operators and URL parameters
+    const warehouseId = searchParams.get('warehouseId');
+    const userRole = session.user?.role;
+    const assignedWarehouses = session.user?.assignedWarehouses || [];
+    
+    let warehouseFilter: string[] | null = null;
     if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
-      warehouseFilter = assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id));
+      warehouseFilter = warehouseId && assignedWarehouses.includes(warehouseId) 
+        ? [warehouseId]
+        : assignedWarehouses;
+    } else if (warehouseId && warehouseId !== 'all') {
+      warehouseFilter = [warehouseId];
     }
 
     // Get total quantities for each product
     const productsWithQuantities = await Promise.all(
-      products.map(async (product) => {
-        const stockQuery: any = { productId: product._id };
-        if (warehouseFilter) {
-          stockQuery.warehouseId = { $in: warehouseFilter };
+      products.map(async (product: any) => {
+        let stockQuery: any = adminDb.collection('stockLevels').where('productId', '==', product.id);
+        if (warehouseFilter && warehouseFilter.length > 0) {
+          stockQuery = stockQuery.where('warehouseId', 'in', warehouseFilter);
         }
-        const stockLevels = await StockLevel.find(stockQuery);
-        const totalQuantity = stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+        const stockLevelsDoc = await stockQuery.get();
+        const stockQuantity = stockLevelsDoc.docs.reduce((sum: number, sl: any) => sum + (sl.data().quantity || 0), 0);
+        const parsedFallbackQuantity = Number(product.quantity);
+        const fallbackQuantity = Number.isFinite(parsedFallbackQuantity) ? parsedFallbackQuantity : 0;
+        const totalQuantity = stockLevelsDoc.empty ? fallbackQuantity : stockQuantity;
         return {
-          ...product.toObject(),
+          ...product,
           totalQuantity,
         };
       })
@@ -83,10 +100,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireRole(request, ['ADMIN', 'MANAGER']);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session || !['ADMIN', 'MANAGER'].includes(session.user?.role || '')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const body = await request.json();
     const { name, sku, category, unit, price, reorderLevel, abcClass, description, isActive } = body;
@@ -95,7 +112,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const product = await Product.create({
+    // Check for duplicate SKU first
+    const existingSku = await adminDb.collection('products').where('sku', '==', sku).limit(1).get();
+    if (!existingSku.empty) {
+      return NextResponse.json({ error: 'SKU already exists' }, { status: 400 });
+    }
+
+    const product = await addDocument('products', {
       name,
       sku,
       category,
@@ -109,9 +132,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(product, { status: 201 });
   } catch (error: any) {
-    if (error.code === 11000) {
-      return NextResponse.json({ error: 'SKU already exists' }, { status: 400 });
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

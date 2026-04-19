@@ -1,32 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Receipt from '@/lib/models/Receipt';
-import { requireAuth } from '@/lib/middleware';
-import { updateStock } from '@/lib/services/stockService';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { getDocument, updateDocument } from '@/lib/firebase/db';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    await connectDB();
+    const receipt = await getDocument<any>('receipts', params.id);
+    if (!receipt) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
-    const receipt = await Receipt.findById(params.id)
-      .populate('warehouseId', 'name code')
-      .populate('createdBy', 'name email')
-      .populate('validatedBy', 'name email')
-      .populate('lines.productId', 'name sku unit')
-      .populate('lines.locationId', 'name code');
+    // Populate relations
+    let warehouse = null;
+    let createdBy = null;
 
-    if (!receipt) {
-      return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
+    if (receipt.warehouseId) {
+      try {
+        const whDoc = await adminDb.collection('warehouses').doc(receipt.warehouseId).get();
+        if (whDoc.exists) {
+          const whData = whDoc.data();
+          warehouse = { _id: whDoc.id, id: whDoc.id, name: whData?.name, code: whData?.code };
+        }
+      } catch(e) {}
     }
 
-    return NextResponse.json(receipt);
+    if (receipt.createdBy) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(receipt.createdBy).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          createdBy = { _id: userDoc.id, id: userDoc.id, name: userData?.name, email: userData?.email };
+        }
+      } catch(e) {}
+    }
+
+    const populatedLines = await Promise.all((receipt.lines || []).map(async (line: any) => {
+      let product = null;
+      let location = null;
+      if (line.productId) {
+        try {
+          const pDoc = await adminDb.collection('products').doc(line.productId).get();
+          if (pDoc.exists) {
+            const pData = pDoc.data();
+            product = { _id: pDoc.id, id: pDoc.id, name: pData?.name, sku: pData?.sku };
+          }
+        } catch(e){}
+      }
+      if (line.locationId) {
+        try {
+          const lDoc = await adminDb.collection('locations').doc(line.locationId).get();
+          if (lDoc.exists) {
+            const lData = lDoc.data();
+            location = { _id: lDoc.id, id: lDoc.id, name: lData?.name, code: lData?.code };
+          }
+        } catch(e){}
+      }
+      return {
+        ...line,
+        productId: product || line.productId,
+        locationId: location || line.locationId
+      };
+    }));
+
+    const populatedReceipt = {
+      ...receipt,
+      warehouseId: warehouse || receipt.warehouseId,
+      createdBy: createdBy || receipt.createdBy,
+      lines: populatedLines
+    };
+
+    return NextResponse.json(populatedReceipt);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -37,31 +84,21 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    await connectDB();
+    const receipt = await getDocument<any>('receipts', params.id);
+    if (!receipt) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
-    const receipt = await Receipt.findById(params.id);
-    if (!receipt) {
-      return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
-    }
-
-    // Only allow updates if status is DRAFT
     if (receipt.status !== 'DRAFT') {
-      return NextResponse.json(
-        { error: 'Cannot update receipt that is not in DRAFT status' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Cannot update receipt that is not in DRAFT status' }, { status: 400 });
     }
 
     const body = await request.json();
-    const updated = await Receipt.findByIdAndUpdate(params.id, body, { new: true })
-      .populate('warehouseId', 'name code')
-      .populate('createdBy', 'name email')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.locationId', 'name code');
+    const updateData = { ...body, updatedAt: new Date().toISOString() };
+    await updateDocument('receipts', params.id, updateData);
 
+    const updated = await getDocument<any>('receipts', params.id);
     return NextResponse.json(updated);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -73,61 +110,64 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userRole = (session.user as any)?.role;
-    if (!['ADMIN', 'OPERATOR'].includes(userRole)) {
+    const userRole = session.user?.role;
+    if (!['ADMIN', 'OPERATOR'].includes(userRole || '')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await connectDB();
-
-    const receipt = await Receipt.findById(params.id);
-    if (!receipt) {
-      return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
-    }
+    const receipt = await getDocument<any>('receipts', params.id);
+    if (!receipt) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
     if (receipt.status === 'DONE') {
       return NextResponse.json({ error: 'Receipt already validated' }, { status: 400 });
     }
 
-    // Update stock for each line
-    const userId = new mongoose.Types.ObjectId((session.user as any).id);
+    const stockService = await import('@/lib/services/stockService');
 
-    for (const line of receipt.lines) {
-      await updateStock(
-        line.productId,
-        receipt.warehouseId,
-        line.locationId,
-        line.quantity,
-        'RECEIPT',
-        'RECEIPT',
-        new mongoose.Types.ObjectId(receipt._id.toString()),
-        userId,
-        undefined,
-        undefined,
-        receipt.warehouseId,
-        line.locationId
-      );
-    }
+    await adminDb.runTransaction(async (t) => {
+      const docSnap = await t.get(adminDb.collection('receipts').doc(params.id));
+      if (!docSnap.exists) throw new Error("Receipt not found");
+      if (docSnap.data()?.status === 'DONE') throw new Error("Receipt already validated");
 
-    // Update receipt status
-    receipt.status = 'DONE';
-    receipt.validatedBy = userId;
-    receipt.validatedAt = new Date();
-    await receipt.save();
+      for (const line of receipt.lines) {
+        await stockService.updateStock(
+          line.productId?.toString(),
+          receipt.warehouseId?.toString(),
+          line.locationId?.toString() || undefined,
+          line.quantity,
+          t
+        );
 
-    const populated = await Receipt.findById(receipt._id)
-      .populate('warehouseId', 'name code')
-      .populate('createdBy', 'name email')
-      .populate('validatedBy', 'name email')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.locationId', 'name code');
+        const movementRef = adminDb.collection('stockMovements').doc();
+        t.set(movementRef, {
+          type: 'RECEIPT',
+          reason: 'RECEIPT',
+          productId: line.productId,
+          warehouseFromId: null,
+          warehouseToId: receipt.warehouseId,
+          locationFromId: null,
+          locationToId: line.locationId || null,
+          quantity: line.quantity,
+          referenceId: params.id,
+          createdBy: session.user?.id || null,
+          createdAt: new Date()
+        });
+      }
 
-    return NextResponse.json(populated);
+      t.update(adminDb.collection('receipts').doc(params.id), {
+        status: 'DONE',
+        validatedBy: session.user?.id || null,
+        validatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    });
+    
+    const updated = await getDocument<any>('receipts', params.id);
+    return NextResponse.json(updated);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Warehouse as WarehouseIcon } from 'lucide-react';
+import { useSession } from '@/components/AuthProvider';
 
 interface Warehouse {
   _id: string;
@@ -13,10 +14,22 @@ interface Warehouse {
 export function WarehouseFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>(
     searchParams.get('warehouse') || ''
   );
+
+  const userRole = (session?.user as any)?.role;
+  const assignedWarehouses = (session?.user as any)?.assignedWarehouses || [];
+  const primaryWarehouseId = (session?.user as any)?.primaryWarehouseId;
+
+  // Filter warehouses based on role
+  const availableWarehouses = userRole === 'ADMIN' 
+    ? warehouses 
+    : warehouses.filter((wh) => assignedWarehouses.includes(wh._id));
+
+  const isLocked = userRole !== 'ADMIN' && availableWarehouses.length <= 1;
 
   useEffect(() => {
     fetch('/api/warehouses')
@@ -35,6 +48,27 @@ export function WarehouseFilter() {
       });
   }, []);
 
+  useEffect(() => {
+    if (userRole && userRole !== 'ADMIN' && availableWarehouses.length > 0) {
+      const urlWarehouse = searchParams.get('warehouse');
+      
+      // If they only have one warehouse, force it
+      if (availableWarehouses.length === 1) {
+        if (urlWarehouse !== availableWarehouses[0]._id) {
+          handleChange(availableWarehouses[0]._id);
+        }
+      } else if (availableWarehouses.length > 1 && !urlWarehouse) {
+        // if no warehouse selected, default to primary or first available
+        const defaultWh = primaryWarehouseId || availableWarehouses[0]._id;
+        handleChange(defaultWh);
+      } else if (urlWarehouse && !assignedWarehouses.includes(urlWarehouse)) {
+        // they're trying to access a warehouse not assigned to them
+        const defaultWh = primaryWarehouseId || availableWarehouses[0]?._id;
+        if (defaultWh) handleChange(defaultWh);
+      }
+    }
+  }, [userRole, availableWarehouses, searchParams, assignedWarehouses, primaryWarehouseId]);
+
   const handleChange = (warehouseId: string) => {
     setSelectedWarehouse(warehouseId);
     const params = new URLSearchParams(searchParams.toString());
@@ -44,8 +78,10 @@ export function WarehouseFilter() {
       params.delete('warehouse');
     }
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
-    router.push(newUrl);
+    router.replace(newUrl);
   };
+
+  if (!userRole) return null; // Wait for session to load
 
   return (
     <div className="flex items-center gap-2">
@@ -53,13 +89,16 @@ export function WarehouseFilter() {
       <select
         value={selectedWarehouse}
         onChange={(e) => handleChange(e.target.value)}
-        className="px-3 py-2 bg-background border border-black/10 dark:border-white/10 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 hover:bg-muted/50"
+        disabled={isLocked}
+        className="px-3 py-2 bg-background border border-black/10 dark:border-white/10 rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
         style={{
           backgroundImage: 'none'
         }}
       >
-        <option value="" className="bg-background text-foreground">All Warehouses</option>
-        {Array.isArray(warehouses) && warehouses.map((wh) => (
+        {userRole === 'ADMIN' && (
+          <option value="" className="bg-background text-foreground">All Warehouses</option>
+        )}
+        {availableWarehouses.map((wh) => (
           <option key={wh._id} value={wh._id} className="bg-background text-foreground">
             {wh.name} ({wh.code})
           </option>

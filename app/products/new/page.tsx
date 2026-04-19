@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 

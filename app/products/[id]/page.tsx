@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit, Package, Warehouse, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import { isAdmin } from '@/lib/authRoles';
 
 interface Product {

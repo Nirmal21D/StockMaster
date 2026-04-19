@@ -1,49 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Product from '@/lib/models/Product';
-import StockLevel from '@/lib/models/StockLevel';
-import StockMovement from '@/lib/models/StockMovement';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb, admin } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
+    const categoryFilter = searchParams.get('category');
 
-    // Get all active products
-    const products = await Product.find({ isActive: true });
+    const productsSnap = await adminDb.collection('products').where('isActive', '==', true).get();
+    const products: any[] = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    let stockQuery: admin.firestore.Query = adminDb.collection('stockLevels');
+    if (warehouseId) {
+      stockQuery = stockQuery.where('warehouseId', '==', warehouseId);
+    }
+    const stockSnap = await stockQuery.get();
+    const stockLevels = stockSnap.docs.map(doc => doc.data());
+
+    // Get all movements to avoid N+1 queries. Can be optimized if DB is huge, but doing JS merge here.
+    const moveSnap = await adminDb.collection('stockMovements').get();
+    const movements: any[] = moveSnap.docs.map(d => ({id: d.id, ...d.data()}));
 
     const stockHealth: any[] = [];
 
     for (const product of products) {
-      // Find stock levels for this product
-      const stockQuery: any = { productId: product._id };
-      if (warehouseId) {
-        stockQuery.warehouseId = new mongoose.Types.ObjectId(warehouseId);
-      }
-
-      const stockLevels = await StockLevel.find(stockQuery);
-
-      for (const stockLevel of stockLevels) {
-        // Find last movement for this product+warehouse+location
-        const lastMovement = await StockMovement.findOne({
-          productId: product._id,
-          $or: [
-            { warehouseFromId: stockLevel.warehouseId },
-            { warehouseToId: stockLevel.warehouseId },
-          ],
-        })
-          .sort({ createdAt: -1 })
-          .limit(1);
+      const pStock = stockLevels.filter(sl => sl.productId === product.id);
+      
+      for (const stockLevel of pStock) {
+        // find last movement
+        const productMoves = movements.filter(m => m.productId === product.id && 
+          (m.warehouseFromId === stockLevel.warehouseId || m.warehouseToId === stockLevel.warehouseId)
+        );
+        productMoves.sort((a,b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+        const lastMovement = productMoves.length > 0 ? productMoves[0] : null;
 
         const daysSinceLastMovement = lastMovement
-          ? Math.floor((Date.now() - lastMovement.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+          ? Math.floor((Date.now() - lastMovement.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24))
           : null;
 
         let category = 'UNKNOWN';
@@ -58,7 +54,7 @@ export async function GET(request: NextRequest) {
         }
 
         stockHealth.push({
-          productId: product._id,
+          productId: product.id,
           productName: product.name,
           sku: product.sku,
           warehouseId: stockLevel.warehouseId,
@@ -70,10 +66,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter by category if needed
-    const category = searchParams.get('category');
-    const filtered = category
-      ? stockHealth.filter((item) => item.category === category)
+    const filtered = categoryFilter
+      ? stockHealth.filter((item) => item.category === categoryFilter)
       : stockHealth;
 
     return NextResponse.json({
@@ -89,4 +83,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

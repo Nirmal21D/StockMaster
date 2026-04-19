@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Printer, X } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Receipt {
   _id: string;
   receiptNumber: string;

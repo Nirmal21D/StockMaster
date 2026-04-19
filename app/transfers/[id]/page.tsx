@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Transfer {
   _id: string;
   transferNumber: string;

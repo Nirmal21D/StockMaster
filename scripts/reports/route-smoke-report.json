@@ -1,0 +1,963 @@
+{
+  "generatedAt": "2026-04-19T15:25:20.399Z",
+  "baseUrl": "http://localhost:3000",
+  "options": {
+    "includeDynamic": true,
+    "runMutationTests": true,
+    "timeoutMs": 12000,
+    "retries": 1,
+    "routeParams": {}
+  },
+  "summary": {
+    "total": 105,
+    "pass": 104,
+    "fail": 0,
+    "skip": 1
+  },
+  "results": [
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/",
+      "url": "http://localhost:3000/",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 165
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/adjustments",
+      "url": "http://localhost:3000/adjustments",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 37
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/adjustments/new",
+      "url": "http://localhost:3000/adjustments/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 17
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/admin/users",
+      "url": "http://localhost:3000/admin/users",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 12
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/auth/forgot-password",
+      "url": "http://localhost:3000/auth/forgot-password",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 1674
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/auth/pending",
+      "url": "http://localhost:3000/auth/pending",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 351
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/auth/reset-password",
+      "url": "http://localhost:3000/auth/reset-password",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 271
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/auth/signin",
+      "url": "http://localhost:3000/auth/signin",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 374
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/auth/signup",
+      "url": "http://localhost:3000/auth/signup",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 365
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/dashboard",
+      "url": "http://localhost:3000/dashboard",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 12
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/deliveries",
+      "url": "http://localhost:3000/deliveries",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 11
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/deliveries/:id",
+      "url": "http://localhost:3000/deliveries/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 12
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/deliveries/new",
+      "url": "http://localhost:3000/deliveries/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 15
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/landing",
+      "url": "http://localhost:3000/landing",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 2974
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/ledger",
+      "url": "http://localhost:3000/ledger",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 31
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/products",
+      "url": "http://localhost:3000/products",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 22
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/products/:id",
+      "url": "http://localhost:3000/products/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 22
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/products/:id/edit",
+      "url": "http://localhost:3000/products/test-id/edit",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 17
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/products/new",
+      "url": "http://localhost:3000/products/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 25
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/products/new-enhanced",
+      "url": "http://localhost:3000/products/new-enhanced",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 25
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/receipts",
+      "url": "http://localhost:3000/receipts",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 28
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/receipts/:id",
+      "url": "http://localhost:3000/receipts/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 21
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/receipts/new",
+      "url": "http://localhost:3000/receipts/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 22
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/receipts/new-enhanced",
+      "url": "http://localhost:3000/receipts/new-enhanced",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 21
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/requisitions",
+      "url": "http://localhost:3000/requisitions",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 20
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/requisitions/:id",
+      "url": "http://localhost:3000/requisitions/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 17
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/requisitions/new",
+      "url": "http://localhost:3000/requisitions/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 24
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/settings",
+      "url": "http://localhost:3000/settings",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 26
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/settings/locations",
+      "url": "http://localhost:3000/settings/locations",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 26
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/settings/warehouses",
+      "url": "http://localhost:3000/settings/warehouses",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 30
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/settings/warehouses/:id",
+      "url": "http://localhost:3000/settings/warehouses/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 27
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/signup",
+      "url": "http://localhost:3000/signup",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 1209
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/test-email-template",
+      "url": "http://localhost:3000/test-email-template",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 1079
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/transfers",
+      "url": "http://localhost:3000/transfers",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 24
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/transfers/:id",
+      "url": "http://localhost:3000/transfers/test-id",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 19
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/transfers/new",
+      "url": "http://localhost:3000/transfers/new",
+      "status": "PASS",
+      "httpStatus": 307,
+      "durationMs": 16
+    },
+    {
+      "kind": "page",
+      "method": "GET",
+      "route": "/welcome",
+      "url": "http://localhost:3000/welcome",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 2315
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/adjustments",
+      "url": "http://localhost:3000/api/adjustments",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1387
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/adjustments",
+      "url": "http://localhost:3000/api/adjustments",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 122
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/admin/users",
+      "url": "http://localhost:3000/api/admin/users",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1194
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/admin/users",
+      "url": "http://localhost:3000/api/admin/users",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 31
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/admin/users/:id",
+      "url": "http://localhost:3000/api/admin/users/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1087
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/admin/users/:id",
+      "url": "http://localhost:3000/api/admin/users/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 41
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "route": "/api/admin/users/:id",
+      "url": "http://localhost:3000/api/admin/users/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 38
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/admin/users/:id/approve",
+      "url": "http://localhost:3000/api/admin/users/test-id/approve",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1170
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/admin/users/:id/reject",
+      "url": "http://localhost:3000/api/admin/users/test-id/reject",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1794
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/best-source",
+      "url": "http://localhost:3000/api/analytics/best-source",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1554
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/dashboard",
+      "url": "http://localhost:3000/api/analytics/dashboard",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1373
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/low-stock",
+      "url": "http://localhost:3000/api/analytics/low-stock",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 921
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/slow-stock",
+      "url": "http://localhost:3000/api/analytics/slow-stock",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 841
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/stock-health",
+      "url": "http://localhost:3000/api/analytics/stock-health",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 767
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/analytics/stockouts",
+      "url": "http://localhost:3000/api/analytics/stockouts",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 729
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/auth/forgot-password",
+      "url": "http://localhost:3000/api/auth/forgot-password",
+      "status": "PASS",
+      "httpStatus": 400,
+      "durationMs": 1652
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/auth/me",
+      "url": "http://localhost:3000/api/auth/me",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1468
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/auth/reset-password",
+      "url": "http://localhost:3000/api/auth/reset-password",
+      "status": "PASS",
+      "httpStatus": 400,
+      "durationMs": 1709
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/auth/reset-password",
+      "url": "http://localhost:3000/api/auth/reset-password",
+      "status": "PASS",
+      "httpStatus": 400,
+      "durationMs": 322
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/auth/session",
+      "url": "http://localhost:3000/api/auth/session",
+      "status": "PASS",
+      "httpStatus": 400,
+      "durationMs": 3308
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "route": "/api/auth/session",
+      "url": "http://localhost:3000/api/auth/session",
+      "status": "SKIP",
+      "reason": "Skipped to avoid invalidating active session cookie during test run"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/auth/signup",
+      "url": "http://localhost:3000/api/auth/signup",
+      "status": "PASS",
+      "httpStatus": 400,
+      "durationMs": 3399
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/chat",
+      "url": "http://localhost:3000/api/chat",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 2446
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/chat",
+      "url": "http://localhost:3000/api/chat",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 47
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/dashboard",
+      "url": "http://localhost:3000/api/dashboard",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 38
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/dashboard/summary",
+      "url": "http://localhost:3000/api/dashboard/summary",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1161
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/deliveries",
+      "url": "http://localhost:3000/api/deliveries",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 979
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/deliveries",
+      "url": "http://localhost:3000/api/deliveries",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 25
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/deliveries/:id",
+      "url": "http://localhost:3000/api/deliveries/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1092
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/deliveries/:id",
+      "url": "http://localhost:3000/api/deliveries/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 53
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/deliveries/:id",
+      "url": "http://localhost:3000/api/deliveries/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 65
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/ledger",
+      "url": "http://localhost:3000/api/ledger",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1512
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/locations",
+      "url": "http://localhost:3000/api/locations",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1313
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/locations",
+      "url": "http://localhost:3000/api/locations",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 28
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/locations/:id",
+      "url": "http://localhost:3000/api/locations/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1444
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/locations/:id",
+      "url": "http://localhost:3000/api/locations/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 35
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "route": "/api/locations/:id",
+      "url": "http://localhost:3000/api/locations/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 44
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/products",
+      "url": "http://localhost:3000/api/products",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1911
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/products",
+      "url": "http://localhost:3000/api/products",
+      "status": "PASS",
+      "httpStatus": 403,
+      "durationMs": 62
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/products/:id",
+      "url": "http://localhost:3000/api/products/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1424
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/products/:id",
+      "url": "http://localhost:3000/api/products/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 25
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "route": "/api/products/:id",
+      "url": "http://localhost:3000/api/products/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 26
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/products/:id/stock-levels",
+      "url": "http://localhost:3000/api/products/test-id/stock-levels",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1414
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/products/bulk-import",
+      "url": "http://localhost:3000/api/products/bulk-import",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 2429
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/receipts",
+      "url": "http://localhost:3000/api/receipts",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1705
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/receipts",
+      "url": "http://localhost:3000/api/receipts",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 27
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/receipts/:id",
+      "url": "http://localhost:3000/api/receipts/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1282
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/receipts/:id",
+      "url": "http://localhost:3000/api/receipts/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 30
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/receipts/:id",
+      "url": "http://localhost:3000/api/receipts/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 30
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/receipts/bulk-import",
+      "url": "http://localhost:3000/api/receipts/bulk-import",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1418
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/requisitions",
+      "url": "http://localhost:3000/api/requisitions",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 2793
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/requisitions",
+      "url": "http://localhost:3000/api/requisitions",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 64
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/requisitions/:id",
+      "url": "http://localhost:3000/api/requisitions/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1100
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/requisitions/:id",
+      "url": "http://localhost:3000/api/requisitions/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 28
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/requisitions/:id",
+      "url": "http://localhost:3000/api/requisitions/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 24
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/stock",
+      "url": "http://localhost:3000/api/stock",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1452
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/templates",
+      "url": "http://localhost:3000/api/templates",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 2411
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/test-email",
+      "url": "http://localhost:3000/api/test-email",
+      "status": "PASS",
+      "httpStatus": 200,
+      "durationMs": 2422
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/transfers",
+      "url": "http://localhost:3000/api/transfers",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1161
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/transfers",
+      "url": "http://localhost:3000/api/transfers",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 118
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/transfers/:id",
+      "url": "http://localhost:3000/api/transfers/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1586
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/transfers/:id",
+      "url": "http://localhost:3000/api/transfers/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 53
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/transfers/:id",
+      "url": "http://localhost:3000/api/transfers/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 62
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/warehouses",
+      "url": "http://localhost:3000/api/warehouses",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1503
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "route": "/api/warehouses",
+      "url": "http://localhost:3000/api/warehouses",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 29
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "route": "/api/warehouses/:id",
+      "url": "http://localhost:3000/api/warehouses/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 1270
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "route": "/api/warehouses/:id",
+      "url": "http://localhost:3000/api/warehouses/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 29
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "route": "/api/warehouses/:id",
+      "url": "http://localhost:3000/api/warehouses/test-id",
+      "status": "PASS",
+      "httpStatus": 401,
+      "durationMs": 31
+    }
+  ]
+}

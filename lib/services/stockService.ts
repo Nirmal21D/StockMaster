@@ -1,189 +1,158 @@
-import StockLevel from '../models/StockLevel';
-import StockMovement from '../models/StockMovement';
-import mongoose from 'mongoose';
+import { adminDb } from '../firebase/admin';
+import * as admin from 'firebase-admin';
 
-/**
- * Increase stock level (for receipts, transfers-in, adjustments with positive difference)
- */
 export async function increaseStock(
-  productId: mongoose.Types.ObjectId,
-  warehouseId: mongoose.Types.ObjectId,
-  locationId: mongoose.Types.ObjectId | undefined,
-  quantity: number
+  productId: string,
+  warehouseId: string,
+  locationId: string | undefined,
+  quantity: number,
+  t?: admin.firestore.Transaction
 ) {
   if (quantity <= 0) {
     throw new Error('Quantity must be positive for increaseStock');
   }
 
-  const stockLevel = await StockLevel.findOneAndUpdate(
-    {
+  const stockLevelsRef = adminDb.collection('stockLevels');
+  let query = stockLevelsRef
+    .where('productId', '==', productId)
+    .where('warehouseId', '==', warehouseId);
+
+  if (locationId) {
+    query = query.where('locationId', '==', locationId);
+  }
+
+  const snapshot = t ? await t.get(query) : await query.get();
+
+  if (snapshot.empty) {
+    // Create new stock level
+    const newStockLevel = {
       productId,
       warehouseId,
       locationId: locationId || null,
-    },
-    {
-      $inc: { quantity },
-      $set: { updatedAt: new Date() },
-    },
-    {
-      upsert: true,
-      new: true,
+      quantity,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    if (t) {
+      const newRef = stockLevelsRef.doc();
+      t.set(newRef, newStockLevel);
+      return { ...newStockLevel, _id: newRef.id, id: newRef.id };
+    } else {
+      const docRef = await stockLevelsRef.add(newStockLevel);
+      return { ...newStockLevel, _id: docRef.id, id: docRef.id };
     }
-  );
-
-  return stockLevel;
+  } else {
+    // Update existing
+    const doc = snapshot.docs[0];
+    const newQuantity = (doc.data().quantity || 0) + quantity;
+    
+    if (t) {
+      t.update(doc.ref, {
+        quantity: admin.firestore.FieldValue.increment(quantity),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return { ...doc.data(), quantity: newQuantity, _id: doc.id, id: doc.id };
+    } else {
+      await doc.ref.update({
+        quantity: admin.firestore.FieldValue.increment(quantity),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      const updated = await doc.ref.get();
+      return { ...updated.data(), _id: updated.id, id: updated.id };
+    }
+  }
 }
 
-/**
- * Decrease stock level (for deliveries, transfers-out, adjustments with negative difference)
- */
 export async function decreaseStock(
-  productId: mongoose.Types.ObjectId,
-  warehouseId: mongoose.Types.ObjectId,
-  locationId: mongoose.Types.ObjectId | undefined,
-  quantity: number
+  productId: string,
+  warehouseId: string,
+  locationId: string | undefined,
+  quantity: number,
+  t?: admin.firestore.Transaction
 ) {
   if (quantity <= 0) {
     throw new Error('Quantity must be positive for decreaseStock');
   }
 
-  const stockLevel = await StockLevel.findOne({
-    productId,
-    warehouseId,
-    locationId: locationId || null,
-  });
-
-  if (!stockLevel) {
-    throw new Error('Stock level not found');
-  }
-
-  if (stockLevel.quantity < quantity) {
-    throw new Error(
-      `Insufficient stock. Available: ${stockLevel.quantity}, Required: ${quantity}`
-    );
-  }
-
-  stockLevel.quantity -= quantity;
-  stockLevel.updatedAt = new Date();
-  await stockLevel.save();
-
-  return stockLevel;
-}
-
-/**
- * Get total stock for a product (optionally filtered by warehouse)
- */
-export async function getTotalStock(
-  productId: mongoose.Types.ObjectId,
-  warehouseId?: mongoose.Types.ObjectId
-): Promise<number> {
-  const query: any = { productId };
-  if (warehouseId) {
-    query.warehouseId = warehouseId;
-  }
-
-  const stockLevels = await StockLevel.find(query);
-  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
-}
-
-/**
- * Update stock level and create ledger entry
- * This is the core function that all stock-changing operations should use
- */
-export async function updateStock(
-  productId: mongoose.Types.ObjectId,
-  warehouseId: mongoose.Types.ObjectId,
-  locationId: mongoose.Types.ObjectId | undefined,
-  quantityChange: number,
-  type: 'RECEIPT' | 'DELIVERY' | 'TRANSFER' | 'ADJUSTMENT',
-  documentType: 'RECEIPT' | 'DELIVERY' | 'TRANSFER' | 'ADJUSTMENT',
-  documentId: mongoose.Types.ObjectId,
-  createdBy: mongoose.Types.ObjectId,
-  warehouseFromId?: mongoose.Types.ObjectId,
-  locationFromId?: mongoose.Types.ObjectId,
-  warehouseToId?: mongoose.Types.ObjectId,
-  locationToId?: mongoose.Types.ObjectId
-) {
-  // Update or create stock level
-  const stockLevel = await StockLevel.findOneAndUpdate(
-    {
-      productId,
-      warehouseId,
-      locationId: locationId || null,
-    },
-    {
-      $inc: { quantity: quantityChange },
-      $set: { updatedAt: new Date() },
-    },
-    {
-      upsert: true,
-      new: true,
-    }
-  );
-
-  // Create ledger entry
-  await StockMovement.create({
-    productId,
-    warehouseFromId,
-    locationFromId,
-    warehouseToId,
-    locationToId,
-    change: quantityChange,
-    type,
-    documentType,
-    documentId,
-    createdBy,
-  });
-
-  return stockLevel;
-}
-
-/**
- * Get available stock for a product in a warehouse
- */
-export async function getAvailableStock(
-  productId: mongoose.Types.ObjectId,
-  warehouseId: mongoose.Types.ObjectId,
-  locationId?: mongoose.Types.ObjectId
-): Promise<number> {
-  const query: any = {
-    productId,
-    warehouseId,
-  };
+  const stockLevelsRef = adminDb.collection('stockLevels');
+  let query = stockLevelsRef
+    .where('productId', '==', productId)
+    .where('warehouseId', '==', warehouseId);
 
   if (locationId) {
-    query.locationId = locationId;
-  } else {
-    query.locationId = null;
+    query = query.where('locationId', '==', locationId);
   }
 
-  const stockLevel = await StockLevel.findOne(query);
-  return stockLevel?.quantity || 0;
+  const snapshot = t ? await t.get(query) : await query.get();
+
+  if (snapshot.empty) {
+    throw new Error('Insufficient stock: no stock record found');
+  }
+
+  const doc = snapshot.docs[0];
+  const currentQuantity = doc.data().quantity || 0;
+
+  if (currentQuantity < quantity) {
+    throw new Error(`Insufficient stock: have ${currentQuantity}, requested ${quantity}`);
+  }
+
+  const newQuantity = currentQuantity - quantity;
+
+  if (t) {
+    t.update(doc.ref, {
+      quantity: admin.firestore.FieldValue.increment(-quantity),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return { ...doc.data(), quantity: newQuantity, _id: doc.id, id: doc.id };
+  } else {
+    await doc.ref.update({
+      quantity: admin.firestore.FieldValue.increment(-quantity),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    const updated = await doc.ref.get();
+    return { ...updated.data(), _id: updated.id, id: updated.id };
+  }
 }
 
-/**
- * Check if sufficient stock is available
- */
-export async function checkStockAvailability(
-  productId: mongoose.Types.ObjectId,
-  warehouseId: mongoose.Types.ObjectId,
-  requiredQuantity: number,
-  locationId?: mongoose.Types.ObjectId
-): Promise<{ available: boolean; availableQuantity: number }> {
-  const availableQuantity = await getAvailableStock(productId, warehouseId, locationId);
+export async function checkStockAvailability(productId: string, warehouseId: string, locationId: string | undefined, requiredQuantity: number, t?: admin.firestore.Transaction) {
+  const stockLevelsRef = adminDb.collection('stockLevels');
+  let query = stockLevelsRef
+    .where('productId', '==', productId)
+    .where('warehouseId', '==', warehouseId);
+
+  if (locationId) {
+    query = query.where('locationId', '==', locationId);
+  }
+
+  const snapshot = t ? await t.get(query) : await query.get();
+
+  if (snapshot.empty) {
+    return { isAvailable: false, currentStock: 0, shortage: requiredQuantity };
+  }
+
+  const currentQuantity = snapshot.docs[0].data().quantity || 0;
   return {
-    available: availableQuantity >= requiredQuantity,
-    availableQuantity,
+    isAvailable: currentQuantity >= requiredQuantity,
+    currentStock: currentQuantity,
+    shortage: currentQuantity >= requiredQuantity ? 0 : requiredQuantity - currentQuantity
   };
 }
 
-// Export as named object for easier importing
-export const stockService = {
-  increaseStock,
-  decreaseStock,
-  getTotalStock,
-  updateStock,
-  getAvailableStock,
-  checkStockAvailability,
-};
+export async function getTotalStock(productId: string, warehouseId: string, t?: admin.firestore.Transaction) {
+  const stockLevelsRef = adminDb.collection('stockLevels')
+    .where('productId', '==', productId)
+    .where('warehouseId', '==', warehouseId);
 
+  const snapshot = t ? await t.get(stockLevelsRef) : await stockLevelsRef.get();
+  
+  if (snapshot.empty) return 0;
+  
+  return snapshot.docs.reduce((sum, doc) => sum + (doc.data().quantity || 0), 0);
+}
+
+export async function updateStock(productId: string, warehouseId: string, locationId: string | undefined, quantityChange: number, t?: admin.firestore.Transaction) {
+  if (quantityChange > 0) return increaseStock(productId, warehouseId, locationId, quantityChange, t);
+  if (quantityChange < 0) return decreaseStock(productId, warehouseId, locationId, Math.abs(quantityChange), t);
+}
+const stockService = { increaseStock, decreaseStock, checkStockAvailability, getTotalStock, updateStock };
+export { stockService };

@@ -1,54 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Requisition from '@/lib/models/Requisition';
-import Warehouse from '@/lib/models/Warehouse';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
+import { getDocument } from '@/lib/firebase/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
     const status = searchParams.get('status');
     const search = searchParams.get('search');
 
-    const query: any = {};
-
-    const userRole = (session.user as any)?.role;
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
+    const userRole = session.user.role;
+    const assignedWarehouses = session.user.assignedWarehouses || [];
     
-    // For Operators, filter by assigned warehouses
-    if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
-      query.requestingWarehouseId = { $in: assignedWarehouses.map((id: string) => new mongoose.Types.ObjectId(id)) };
-    } 
-    // For Managers and Admins, show all requisitions (unless warehouseId filter is provided)
-    else if (warehouseId) {
-      query.requestingWarehouseId = new mongoose.Types.ObjectId(warehouseId);
-    }
-    // If no filters applied, query is empty {} which returns all requisitions (for Managers/Admins)
+    let requisitionsRef: any = adminDb.collection('requisitions');
+    let requisitionsSnapshot = await requisitionsRef.orderBy('createdAt', 'desc').limit(100).get();
+    let requisitions = requisitionsSnapshot.docs.map((doc: any) => ({ _id: doc.id, ...doc.data() }));
 
-    if (status) {
-      query.status = status;
-    }
+    // Memory Filtering
+    requisitions = requisitions.filter((req: any) => {
+      let isMatch = true;
 
-    if (search) {
-      query.requisitionNumber = { $regex: search, $options: 'i' };
-    }
+      // Role check
+      if (userRole === 'OPERATOR' && assignedWarehouses.length > 0) {
+        if (!assignedWarehouses.includes(req.requestingWarehouseId)) isMatch = false;
+      } else if (warehouseId) {
+        if (req.requestingWarehouseId !== warehouseId) isMatch = false;
+      }
 
-    const requisitions = await Requisition.find(query)
-      .populate('requestingWarehouseId', 'name code')
-      .populate({ path: 'suggestedSourceWarehouseId', select: 'name code', strictPopulate: false })
-      .populate({ path: 'finalSourceWarehouseId', select: 'name code', strictPopulate: false })
-      .populate('createdBy', 'name email')
-      .populate({ path: 'approvedBy', select: 'name email', strictPopulate: false })
-      .populate('lines.productId', 'name sku')
-      .sort({ createdAt: -1 })
-      .limit(100);
+      if (status && req.status !== status) isMatch = false;
+
+      if (search && !(req.requisitionNumber && req.requisitionNumber.toLowerCase().includes(search.toLowerCase()))) {
+        isMatch = false;
+      }
+
+      return isMatch;
+    });
+
+    // Populate lookup references
+    requisitions = await Promise.all(
+      requisitions.map(async (r: any) => {
+        const [requestingWarehouse, suggestedWarehouse, finalWarehouse, createdByUser] = await Promise.all([
+          r.requestingWarehouseId ? getDocument('warehouses', r.requestingWarehouseId) : null,
+          r.suggestedSourceWarehouseId ? getDocument('warehouses', r.suggestedSourceWarehouseId) : null,
+          r.finalSourceWarehouseId ? getDocument('warehouses', r.finalSourceWarehouseId) : null,
+          r.createdBy ? getDocument('users', r.createdBy) : null,
+        ]);
+
+        return {
+          ...r,
+          requestingWarehouseId: requestingWarehouse || r.requestingWarehouseId,
+          suggestedSourceWarehouseId: suggestedWarehouse || r.suggestedSourceWarehouseId,
+          finalSourceWarehouseId: finalWarehouse || r.finalSourceWarehouseId,
+          createdBy: createdByUser || r.createdBy,
+        };
+      })
+    );
 
     return NextResponse.json(requisitions);
   } catch (error: any) {
@@ -58,46 +70,40 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    const userRole = (session.user as any)?.role;
-    if (userRole !== 'MANAGER') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const session = await getServerSessionFirebase();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
-
-    const body = await request.json();
-    let {
+    const {
       requestingWarehouseId,
       suggestedSourceWarehouseId,
       lines,
       status,
-    } = body;
+    } = await request.json();
 
-    // Server-side default: If MANAGER doesn't provide warehouse, use their primary/main warehouse
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-    const primaryWarehouseId = (session.user as any)?.primaryWarehouseId;
-    
-    if (!requestingWarehouseId) {
-      requestingWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+    const userRole = session.user.role;
+    if (userRole !== 'MANAGER') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (!requestingWarehouseId || !lines || lines.length === 0) {
+    const assignedWarehouses = session.user.assignedWarehouses || [];
+    const primaryWarehouseId = session.user.primaryWarehouseId;
+    
+    let targetReqWarehouseId = requestingWarehouseId;
+    if (!targetReqWarehouseId) {
+      targetReqWarehouseId = primaryWarehouseId || (assignedWarehouses.length > 0 ? assignedWarehouses[0] : null);
+    }
+
+    if (!targetReqWarehouseId || !lines || lines.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Verify Manager has access to this warehouse
-    const requestingWarehouseIdStr = requestingWarehouseId.toString();
     const managerWarehouseIds = primaryWarehouseId 
       ? [primaryWarehouseId, ...assignedWarehouses]
       : assignedWarehouses;
     
-    const hasAccess = managerWarehouseIds.some((whId: any) => {
-      const whIdStr = whId?.toString ? whId.toString() : String(whId);
-      return whIdStr === requestingWarehouseIdStr;
-    });
+    const hasAccess = managerWarehouseIds.includes(targetReqWarehouseId);
     
     if (!hasAccess) {
       return NextResponse.json(
@@ -106,38 +112,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const warehouse = await Warehouse.findById(requestingWarehouseId);
-    if (!warehouse) {
+    const warehouseDoc = await adminDb.collection('warehouses').doc(targetReqWarehouseId).get();
+    if (!warehouseDoc.exists) {
       return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
     }
 
-    // Generate requisition number
-    const count = await Requisition.countDocuments();
+    const countSnapshot = await adminDb.collection('requisitions').count().get();
+    const count = countSnapshot.data().count;
     const requisitionNumber = `REQ-${String(count + 1).padStart(4, '0')}`;
 
-    // Auto-submit: Create requisition with status SUBMITTED (not DRAFT)
-    const requisition = await Requisition.create({
+    const requisitionRef = await adminDb.collection('requisitions').add({
       requisitionNumber,
-      requestingWarehouseId: new mongoose.Types.ObjectId(requestingWarehouseId),
-      suggestedSourceWarehouseId: suggestedSourceWarehouseId
-        ? new mongoose.Types.ObjectId(suggestedSourceWarehouseId)
-        : undefined,
+      requestingWarehouseId: targetReqWarehouseId,
+      suggestedSourceWarehouseId: suggestedSourceWarehouseId || null,
       lines: lines.map((line: any) => ({
-        productId: new mongoose.Types.ObjectId(line.productId),
+        productId: line.productId,
         quantityRequested: line.quantityRequested,
-        neededByDate: line.neededByDate ? new Date(line.neededByDate) : undefined,
+        neededByDate: line.neededByDate ? new Date(line.neededByDate) : null,
       })),
       status: 'SUBMITTED', // Auto-submit on creation
-      createdBy: new mongoose.Types.ObjectId((session.user as any).id),
+      createdBy: session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
-    const populated = await Requisition.findById(requisition._id)
-      .populate('requestingWarehouseId', 'name code')
-      .populate('suggestedSourceWarehouseId', 'name code')
-      .populate('createdBy', 'name email')
-      .populate('lines.productId', 'name sku');
+    const savedDoc = await requisitionRef.get();
 
-    return NextResponse.json(populated, { status: 201 });
+    return NextResponse.json({ _id: savedDoc.id, ...savedDoc.data() }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

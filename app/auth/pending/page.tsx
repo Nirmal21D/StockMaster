@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { Clock, Mail, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 
 export default function PendingApprovalPage() {
   const { data: session } = useSession();
@@ -23,7 +25,25 @@ export default function PendingApprovalPage() {
 
   const handleSignOut = async () => {
     localStorage.removeItem('pendingUserEmail');
-    router.push('/auth/signin');
+
+    try {
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+    } catch (error) {
+      console.error('Failed to clear server session cookie:', error);
+    }
+
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Firebase sign out failed:', error);
+    }
+
+    router.replace('/auth/signin');
+    router.refresh();
   };
 
   return (

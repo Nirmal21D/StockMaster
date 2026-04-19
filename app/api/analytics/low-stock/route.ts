@@ -1,46 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Product from '@/lib/models/Product';
-import StockLevel from '@/lib/models/StockLevel';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb, admin } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const warehouseId = searchParams.get('warehouseId');
 
-    // Get all active products
-    const products = await Product.find({ isActive: true });
+    const productsSnap = await adminDb.collection('products').where('isActive', '==', true).get();
+    
+    let stockQuery: admin.firestore.Query = adminDb.collection('stockLevels');
+    if (warehouseId) {
+      stockQuery = stockQuery.where('warehouseId', '==', warehouseId);
+    }
+    const stockSnap = await stockQuery.get();
+    const stockLevels = stockSnap.docs.map(doc => doc.data());
 
     const lowStockItems: any[] = [];
 
-    for (const product of products) {
-      let totalQuantity = 0;
+    productsSnap.docs.forEach(pDoc => {
+      const product = pDoc.data();
+      const pStock = stockLevels.filter(sl => sl.productId === pDoc.id);
+      const totalQuantity = pStock.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
 
-      if (warehouseId) {
-        // Sum stock for specific warehouse
-        const stockLevels = await StockLevel.find({
-          productId: product._id,
-          warehouseId: new mongoose.Types.ObjectId(warehouseId),
-        });
-        totalQuantity = stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
-      } else {
-        // Sum stock across all warehouses
-        const stockLevels = await StockLevel.find({
-          productId: product._id,
-        });
-        totalQuantity = stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
-      }
-
-      if (totalQuantity < product.reorderLevel) {
+      if (totalQuantity < (product.reorderLevel || 0)) {
         lowStockItems.push({
-          productId: product._id,
+          productId: pDoc.id,
           productName: product.name,
           sku: product.sku,
           currentStock: totalQuantity,
@@ -48,11 +36,10 @@ export async function GET(request: NextRequest) {
           deficit: product.reorderLevel - totalQuantity,
         });
       }
-    }
+    });
 
     return NextResponse.json({ lowStockItems, count: lowStockItems.length });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

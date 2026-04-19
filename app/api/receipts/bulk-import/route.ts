@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import connectDB from '@/lib/mongodb';
-import Receipt from '@/lib/models/Receipt';
-import Product from '@/lib/models/Product';
-import Warehouse from '@/lib/models/Warehouse';
-import Location from '@/lib/models/Location';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
 import { stockService } from '@/lib/services/stockService';
 import { ReceiptImportData } from '@/lib/services/excelImportService';
-import mongoose from 'mongoose';
 
 interface GroupedReceiptData {
   supplierName: string;
@@ -23,7 +17,7 @@ interface GroupedReceiptData {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSessionFirebase();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -37,15 +31,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
     const results = {
       total: receipts.length,
       receiptsCreated: 0,
       errors: [] as Array<{ row: number; error: string }>,
     };
 
-    // First, validate all data and collect IDs
     const validatedReceipts: Array<{
       original: ReceiptImportData;
       productId: string;
@@ -54,67 +45,52 @@ export async function POST(request: NextRequest) {
       index: number;
     }> = [];
 
+    const getDocsByFieldIC = async (collection: string, field: string, value: string) => {
+      const snap = await adminDb.collection(collection).get();
+      return snap.docs.find(d => {
+        const data = d.data();
+        return data.isActive !== false && typeof data[field] === 'string' && data[field].toLowerCase() === value.toLowerCase();
+      });
+    };
+
     for (let i = 0; i < receipts.length; i++) {
       const receiptData = receipts[i];
       
       try {
-        // Find product by SKU
-        const product = await Product.findOne({ sku: receiptData.productSku, isActive: true });
-        if (!product) {
-          results.errors.push({
-            row: i + 1,
-            error: `Product with SKU '${receiptData.productSku}' not found`,
-          });
+        const prodSnap = await adminDb.collection('products').where('sku', '==', receiptData.productSku).where('isActive', '==', true).limit(1).get();
+        if (prodSnap.empty) {
+          results.errors.push({ row: i + 1, error: `Product with SKU '${receiptData.productSku}' not found` });
           continue;
         }
+        const product = prodSnap.docs[0];
 
-        // Find warehouse by name
-        const warehouse = await Warehouse.findOne({ 
-          name: { $regex: new RegExp(`^${receiptData.warehouseName}$`, 'i') },
-          isActive: true 
-        });
+        const warehouse = await getDocsByFieldIC('warehouses', 'name', receiptData.warehouseName);
         if (!warehouse) {
-          results.errors.push({
-            row: i + 1,
-            error: `Warehouse '${receiptData.warehouseName}' not found`,
-          });
+          results.errors.push({ row: i + 1, error: `Warehouse '${receiptData.warehouseName}' not found` });
           continue;
         }
 
-        // Find location if specified
         let locationId: string | undefined;
         if (receiptData.locationName) {
-          const location = await Location.findOne({
-            warehouseId: warehouse._id,
-            name: { $regex: new RegExp(`^${receiptData.locationName}$`, 'i') },
-            isActive: true,
-          });
+           const snapLocs = await adminDb.collection('locations').where('warehouseId', '==', warehouse.id).get();
+           const location = snapLocs.docs.find(d => {
+              const data = d.data();
+              return data.isActive !== false && typeof data.name === 'string' && data.name.toLowerCase() === receiptData.locationName!.toLowerCase();
+           });
+           
           if (!location) {
-            results.errors.push({
-              row: i + 1,
-              error: `Location '${receiptData.locationName}' not found in warehouse '${receiptData.warehouseName}'`,
-            });
+            results.errors.push({ row: i + 1, error: `Location '${receiptData.locationName}' not found in warehouse '${receiptData.warehouseName}'` });
             continue;
           }
-          locationId = location._id.toString();
+          locationId = location.id;
         }
 
-        validatedReceipts.push({
-          original: receiptData,
-          productId: product._id.toString(),
-          warehouseId: warehouse._id.toString(),
-          locationId,
-          index: i,
-        });
-      } catch (error) {
-        results.errors.push({
-          row: i + 1,
-          error: error instanceof Error ? error.message : 'Validation error',
-        });
+        validatedReceipts.push({ original: receiptData, productId: product.id, warehouseId: warehouse.id, locationId, index: i });
+      } catch (error: any) {
+        results.errors.push({ row: i + 1, error: error.message || 'Validation error' });
       }
     }
 
-    // Group receipts by supplier and warehouse
     const groupedReceipts = new Map<string, GroupedReceiptData>();
 
     for (const validated of validatedReceipts) {
@@ -136,66 +112,66 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create receipts
+    const receiptsRef = adminDb.collection('receipts');
     for (const [, receiptGroup] of groupedReceipts) {
       try {
-        // Generate receipt number
-        const receiptCount = await Receipt.countDocuments();
+        const statSnap = await adminDb.collection('counters').doc('receipts').get();
+        let receiptCount = statSnap.exists ? (statSnap.data()?.count || 0) : 0;
+        await adminDb.collection('counters').doc('receipts').set({ count: receiptCount + 1 }, { merge: true });
+
         const receiptNumber = `REC${String(receiptCount + 1).padStart(6, '0')}`;
 
-        // Create receipt
-        const receipt = await Receipt.create({
+        const receiptData = {
           receiptNumber,
           supplierName: receiptGroup.supplierName,
           warehouseId: receiptGroup.warehouseId,
-          reference: receiptGroup.reference,
-          status: 'WAITING',
+          reference: receiptGroup.reference || null,
+          status: 'DONE',
           lines: receiptGroup.lines,
-          createdBy: (session.user as any).id,
-        });
+          createdBy: session.user.id,
+          validatedBy: session.user.id,
+          validatedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
 
-        // Auto-validate the receipt (update stock levels)
+        const docRef = await receiptsRef.add(receiptData);
+
         for (const line of receiptGroup.lines) {
           await stockService.updateStock(
-            new mongoose.Types.ObjectId(line.productId),
-            new mongoose.Types.ObjectId(receiptGroup.warehouseId),
-            line.locationId ? new mongoose.Types.ObjectId(line.locationId) : undefined,
-            line.quantity,
-            'RECEIPT',
-            'RECEIPT',
-            new mongoose.Types.ObjectId(receipt._id.toString()),
-            new mongoose.Types.ObjectId((session.user as any).id)
+            line.productId,
+            receiptGroup.warehouseId,
+            line.locationId || undefined,
+            line.quantity
           );
+
+          // Log movement
+          await adminDb.collection('stockMovements').add({
+            type: 'RECEIPT',
+            reason: 'BULK_IMPORT',
+            productId: line.productId,
+            warehouseFromId: null,
+            warehouseToId: receiptGroup.warehouseId,
+            locationFromId: null,
+            locationToId: line.locationId || null,
+            quantity: line.quantity,
+            referenceId: docRef.id,
+            createdBy: session.user.id,
+            createdAt: new Date()
+          });
         }
 
-        // Update receipt status
-        await Receipt.findByIdAndUpdate(receipt._id, {
-          status: 'DONE',
-          validatedBy: (session.user as any).id,
-          validatedAt: new Date(),
-        });
-
         results.receiptsCreated++;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating receipt:', error);
-        results.errors.push({
-          row: 0,
-          error: `Failed to create receipt for ${receiptGroup.supplierName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        });
+        results.errors.push({ row: 0, error: `Failed to create receipt for ${receiptGroup.supplierName}: ${error.message || 'Unknown error'}` });
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Import completed. ${results.receiptsCreated} receipts created from ${validatedReceipts.length} valid entries`,
-      results,
-    });
+    return NextResponse.json({ success: true, message: `Import completed. ${results.receiptsCreated} receipts created from ${validatedReceipts.length} valid entries`, results });
 
   } catch (error) {
     console.error('Bulk receipt import error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

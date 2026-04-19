@@ -1,33 +1,56 @@
-import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const path = req.nextUrl.pathname;
+const protectedRoutes = [
+  '/dashboard',
+  '/products',
+  '/receipts',
+  '/deliveries',
+  '/requisitions',
+  '/transfers',
+  '/ledger',
+  '/settings',
+  '/adjustments',
+  '/admin'
+];
 
-    // Protect dashboard and all app routes
-    if (path.startsWith('/dashboard') || path.startsWith('/products') || 
-        path.startsWith('/receipts') || path.startsWith('/deliveries') ||
-        path.startsWith('/requisitions') || path.startsWith('/transfers') ||
-        path.startsWith('/ledger') || path.startsWith('/settings')) {
-      if (!token) {
-        return NextResponse.redirect(new URL('/auth/signin', req.url));
-      }
-    }
+export async function middleware(request: NextRequest) {
+  const sessionCookie = request.cookies.get('session')?.value;
+  
+  const isProtectedRoute = protectedRoutes.some((route) => 
+    request.nextUrl.pathname.startsWith(route)
+  );
 
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+  // If there's no session and the user is trying to access a protected route
+  if (!sessionCookie && isProtectedRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/signin';
+    url.searchParams.set('callbackUrl', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
   }
-);
+
+  // If there's a session and user tries to access auth pages (login/register)
+  if (sessionCookie && request.nextUrl.pathname.startsWith('/auth/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/products/:path*', '/receipts/:path*', 
-            '/deliveries/:path*', '/requisitions/:path*', '/transfers/:path*',
-            '/ledger/:path*', '/settings/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/products/:path*',
+    '/receipts/:path*',
+    '/deliveries/:path*',
+    '/requisitions/:path*',
+    '/transfers/:path*',
+    '/ledger/:path*',
+    '/settings/:path*',
+    '/adjustments/:path*',
+    '/admin/:path*',
+    '/auth/:path*'
+  ]
 };
-

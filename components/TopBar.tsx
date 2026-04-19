@@ -1,9 +1,11 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, User, LayoutDashboard, Package, ArrowDownCircle, ArrowUpCircle, FileText, Truck, Settings, History, ClipboardList, Users, Menu, X } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Package, ArrowDownCircle, ArrowUpCircle, FileText, Truck, Settings, History, ClipboardList, Users, Menu, X, Globe, Anchor } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { WarehouseFilter } from './WarehouseFilter';
@@ -20,6 +22,7 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
+  { name: 'Customs', href: '/dashboard/customs', icon: Globe, roles: ['ADMIN', 'MANAGER'] },
   { name: 'Products', href: '/products', icon: Package, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Receipts', href: '/receipts', icon: ArrowDownCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
   { name: 'Deliveries', href: '/deliveries', icon: ArrowUpCircle, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
@@ -45,8 +48,25 @@ export function TopBar() {
   }, []);
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
-    router.push('/auth/signin');
+    try {
+      // Clear server session cookie used by middleware and server routes.
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+    } catch (error) {
+      console.error('Failed to clear server session cookie:', error);
+    }
+
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Firebase sign out failed:', error);
+    }
+
+    router.replace('/auth/signin');
+    router.refresh();
   };
 
   // Filter navigation based on user role

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import StockLevel from '@/lib/models/StockLevel';
-import { requireAuth } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
-
-    await connectDB();
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('productId');
@@ -20,18 +16,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'productId and warehouseId are required' }, { status: 400 });
     }
 
-    const query: any = {
-      productId: new mongoose.Types.ObjectId(productId),
-      warehouseId: new mongoose.Types.ObjectId(warehouseId),
-    };
+    let query = adminDb.collection('stockLevels')
+      .where('productId', '==', productId)
+      .where('warehouseId', '==', warehouseId);
 
     if (locationId) {
-      query.locationId = new mongoose.Types.ObjectId(locationId);
-    } else {
-      query.locationId = null;
+      query = query.where('locationId', '==', locationId);
     }
 
-    const stockLevel = await StockLevel.findOne(query);
+    const snapshot = await query.limit(10).get(); 
+    
+    let stockLevel = null;
+    
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (!locationId && data.locationId) {
+        continue;
+      }
+      stockLevel = data;
+      break;
+    }
 
     return NextResponse.json({
       quantity: stockLevel?.quantity || 0,
@@ -40,4 +44,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

@@ -1,33 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Transfer from '@/lib/models/Transfer';
-import { requireAuth } from '@/lib/middleware';
-import { updateStock, checkStockAvailability } from '@/lib/services/stockService';
-import mongoose from 'mongoose';
+import { adminDb } from '@/lib/firebase/admin';
+import * as admin from 'firebase-admin';
+import { getServerSessionFirebase } from '@/lib/firebase/auth-helper';
+import { updateStock } from '@/lib/services/stockService';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    await connectDB();
-
-    const transfer = await Transfer.findById(params.id)
-      .populate('sourceWarehouseId', 'name code')
-      .populate('targetWarehouseId', 'name code')
-      .populate('requisitionId', 'requisitionNumber')
-      .populate('deliveryId', 'deliveryNumber')
-      .populate('createdBy', 'name email')
-      .populate('validatedBy', 'name email')
-      .populate('lines.productId', 'name sku unit')
-      .populate('lines.sourceLocationId', 'name code')
-      .populate('lines.targetLocationId', 'name code');
-
-    if (!transfer) {
+    const transferDoc = await adminDb.collection('transfers').doc(params.id).get();
+    if (!transferDoc.exists) {
       return NextResponse.json({ error: 'Transfer not found' }, { status: 404 });
+    }
+
+    const transferData = transferDoc.data() || {};
+    const transfer: any = { id: transferDoc.id, _id: transferDoc.id, ...transferData };
+
+    // Manual populate helper
+    const populateField = async (collection: string, id: string, fields: string[]) => {
+      if (!id) return null;
+      try {
+        const doc = await adminDb.collection(collection).doc(id).get();
+        if (!doc.exists) return null;
+        const data = doc.data() || {};
+        const result: any = { _id: doc.id, id: doc.id };
+        fields.forEach(f => { if (data[f]) result[f] = data[f]; });
+        return result;
+      } catch {
+        return null;
+      }
+    };
+
+    transfer.sourceWarehouseId = await populateField('warehouses', transfer.sourceWarehouseId?.toString(), ['name', 'code']);
+    transfer.targetWarehouseId = await populateField('warehouses', transfer.targetWarehouseId?.toString(), ['name', 'code']);
+    transfer.requisitionId = await populateField('requisitions', transfer.requisitionId?.toString(), ['requisitionNumber']);
+    transfer.deliveryId = await populateField('deliveries', transfer.deliveryId?.toString(), ['deliveryNumber']);
+    transfer.createdBy = await populateField('users', transfer.createdBy?.toString(), ['name', 'email']);
+    transfer.validatedBy = await populateField('users', transfer.validatedBy?.toString(), ['name', 'email']);
+
+    if (transfer.lines && Array.isArray(transfer.lines)) {
+      transfer.lines = await Promise.all(transfer.lines.map(async (line: any) => {
+        const newLine = { ...line };
+        newLine.productId = await populateField('products', line.productId?.toString(), ['name', 'sku', 'unit']) || line.productId;
+        newLine.sourceLocationId = await populateField('locations', line.sourceLocationId?.toString(), ['name', 'code']) || line.sourceLocationId;
+        newLine.targetLocationId = await populateField('locations', line.targetLocationId?.toString(), ['name', 'code']) || line.targetLocationId;
+        return newLine;
+      }));
     }
 
     return NextResponse.json(transfer);
@@ -41,53 +63,41 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userRole = (session.user as any)?.role;
-    // Managers can only view transfers, not edit them
-    if (userRole === 'MANAGER') {
-      return NextResponse.json(
-        { error: 'Managers cannot edit transfers' },
-        { status: 403 }
-      );
+    const userRole = session.user?.role;
+    if (!['ADMIN', 'OPERATOR', 'MANAGER'].includes(userRole || '')) {
+      return NextResponse.json({ error: 'Forbidden. Role not permitted to edit transfers.' }, { status: 403 });
     }
 
-    await connectDB();
-
-    const transfer = await Transfer.findById(params.id);
-    if (!transfer) {
+    const transferRef = adminDb.collection('transfers').doc(params.id);
+    const transferDoc = await transferRef.get();
+    
+    if (!transferDoc.exists) {
       return NextResponse.json({ error: 'Transfer not found' }, { status: 404 });
     }
 
-    // Only allow updates if status is DRAFT
-    if (transfer.status !== 'DRAFT') {
-      return NextResponse.json(
-        { error: 'Cannot update transfer that is not in DRAFT status' },
-        { status: 400 }
-      );
+    const transferData = transferDoc.data() || {};
+
+    if (transferData.status !== 'DRAFT') {
+      return NextResponse.json({ error: 'Cannot update transfer that is not in DRAFT status' }, { status: 400 });
     }
 
-    // Operators can only edit transfers from their assigned warehouses
-    const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-    if (userRole === 'OPERATOR' && !assignedWarehouses.includes(transfer.sourceWarehouseId.toString())) {
-      return NextResponse.json(
-        { error: 'You do not have access to edit this transfer' },
-        { status: 403 }
-      );
+    const assignedWarehouses = session.user?.assignedWarehouses || [];
+    if (userRole === 'OPERATOR' && !assignedWarehouses.includes(transferData.sourceWarehouseId?.toString())) {
+      return NextResponse.json({ error: 'You do not have access to edit this transfer' }, { status: 403 });
     }
 
     const body = await request.json();
-    const updated = await Transfer.findByIdAndUpdate(params.id, body, { new: true })
-      .populate('sourceWarehouseId', 'name code')
-      .populate('targetWarehouseId', 'name code')
-      .populate('requisitionId', 'requisitionNumber')
-      .populate('deliveryId', 'deliveryNumber')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.sourceLocationId', 'name code')
-      .populate('lines.targetLocationId', 'name code');
+    
+    delete body._id;
+    delete body.id;
+    body.updatedAt = new Date();
 
-    return NextResponse.json(updated);
+    await transferRef.update(body);
+    
+    return NextResponse.json({ id: params.id, ...transferData, ...body });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -98,259 +108,191 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth(request);
-    if (session instanceof NextResponse) return session;
+    const session = await getServerSessionFirebase();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userRole = (session.user as any)?.role;
+    const userRole = session.user?.role;
     const body = await request.json();
-    const action = body.action || 'complete'; // 'complete' or 'accept'
+    const action = body.action || 'complete'; 
 
-    await connectDB();
-
-    const transfer = await Transfer.findById(params.id);
-    if (!transfer) {
+    const transferRef = adminDb.collection('transfers').doc(params.id);
+    const transferDoc = await transferRef.get();
+    
+    if (!transferDoc.exists) {
       return NextResponse.json({ error: 'Transfer not found' }, { status: 404 });
     }
 
-    const userId = new mongoose.Types.ObjectId((session.user as any).id);
+    const transferData = (transferDoc.data() || {}) as any;
+    const userId = session.user?.id;
     const assignedWarehouses = (session.user as any)?.assignedWarehouses || [];
-    const primaryWarehouseId = (session.user as any)?.primaryWarehouseId;
 
-    // Handle acceptance by receiving warehouse Operator
     if (action === 'accept') {
-      if (!['ADMIN', 'OPERATOR'].includes(userRole)) {
+      if (!['ADMIN', 'OPERATOR', 'MANAGER'].includes(userRole || '')) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
-      if (transfer.status !== 'IN_TRANSIT') {
-        return NextResponse.json(
-          { error: 'Can only accept transfers in IN_TRANSIT status' },
-          { status: 400 }
-        );
+      if (transferData.status !== 'IN_TRANSIT') {
+        return NextResponse.json({ error: 'Can only accept transfers in IN_TRANSIT status' }, { status: 400 });
       }
 
-      // Verify Operator is from the receiving warehouse (targetWarehouseId)
       if (userRole === 'OPERATOR') {
-        const targetWarehouseIdStr = transfer.targetWarehouseId.toString();
-        const hasAccess = assignedWarehouses.some((whId: any) => {
-          const whIdStr = whId?.toString ? whId.toString() : String(whId);
-          return whIdStr === targetWarehouseIdStr;
-        });
-        
+        const targetWarehouseStr = transferData.targetWarehouseId?.toString();
+        const hasAccess = assignedWarehouses.some((whId: any) => String(whId) === targetWarehouseStr);
         if (!hasAccess) {
-          return NextResponse.json(
-            { error: 'You can only accept transfers for your assigned warehouse' },
-            { status: 403 }
-          );
+          return NextResponse.json({ error: 'You can only accept transfers for your assigned warehouse' }, { status: 403 });
         }
       }
 
-      // Update stock: increment to target (stock was already decremented from source when transfer was dispatched)
-      for (const line of transfer.lines) {
-        const productIdObj = line.productId instanceof mongoose.Types.ObjectId 
-          ? line.productId 
-          : new mongoose.Types.ObjectId(line.productId);
-        const targetWarehouseIdObj = transfer.targetWarehouseId instanceof mongoose.Types.ObjectId 
-          ? transfer.targetWarehouseId 
-          : new mongoose.Types.ObjectId(transfer.targetWarehouseId);
-        const targetLocationIdObj = line.targetLocationId 
-          ? (line.targetLocationId instanceof mongoose.Types.ObjectId 
-              ? line.targetLocationId 
-              : new mongoose.Types.ObjectId(line.targetLocationId))
-          : undefined;
-        const sourceWarehouseIdObj = transfer.sourceWarehouseId instanceof mongoose.Types.ObjectId 
-          ? transfer.sourceWarehouseId 
-          : new mongoose.Types.ObjectId(transfer.sourceWarehouseId);
-        const sourceLocationIdObj = line.sourceLocationId 
-          ? (line.sourceLocationId instanceof mongoose.Types.ObjectId 
-              ? line.sourceLocationId 
-              : new mongoose.Types.ObjectId(line.sourceLocationId))
-          : undefined;
+      await adminDb.runTransaction(async (t) => {
+        const docSnap = await t.get(transferRef);
+        if (!docSnap.exists) throw new Error("Transfer not found");
+        if (docSnap.data()?.status !== 'IN_TRANSIT') throw new Error("Status changed, aborting.");
+        
+        for (const line of (transferData.lines || [])) {
+          await updateStock(
+            line.productId?.toString(),
+            transferData.targetWarehouseId?.toString(),
+            line.targetLocationId?.toString(),
+            line.quantity,
+            t
+          );
 
-        await updateStock(
-          productIdObj,
-          targetWarehouseIdObj,
-          targetLocationIdObj,
-          line.quantity,
-          'TRANSFER',
-          'TRANSFER',
-          new mongoose.Types.ObjectId(transfer._id.toString()),
-          userId,
-          sourceWarehouseIdObj,
-          sourceLocationIdObj,
-          targetWarehouseIdObj,
-          targetLocationIdObj
-        );
-      }
+          const movementRef = adminDb.collection('stockMovements').doc();
+          t.set(movementRef, {
+            type: 'TRANSFER',
+            reason: 'TRANSFER_IN',
+            productId: line.productId,
+            warehouseFromId: transferData.sourceWarehouseId,
+            warehouseToId: transferData.targetWarehouseId,
+            locationFromId: line.sourceLocationId || null,
+            locationToId: line.targetLocationId || null,
+            quantity: line.quantity,
+            referenceId: params.id,
+            createdBy: userId || null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
 
-      // Update transfer status
-      transfer.status = 'DONE';
-      transfer.validatedBy = userId;
-      transfer.receivedAt = new Date();
-      await transfer.save();
+        t.update(transferRef, {
+          status: 'DONE',
+          validatedBy: userId || null,
+          receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      });
 
-      const populated = await Transfer.findById(transfer._id)
-        .populate('sourceWarehouseId', 'name code')
-        .populate('targetWarehouseId', 'name code')
-        .populate('requisitionId', 'requisitionNumber')
-        .populate('deliveryId', 'deliveryNumber')
-        .populate('createdBy', 'name email')
-        .populate('validatedBy', 'name email')
-        .populate('lines.productId', 'name sku')
-        .populate('lines.sourceLocationId', 'name code')
-        .populate('lines.targetLocationId', 'name code');
-
-      return NextResponse.json(populated);
+      return NextResponse.json({ success: true, message: 'Transfer accepted' });
     }
 
-    // Handle completion/dispatch by source warehouse Operator (existing flow)
-    if (!['ADMIN', 'OPERATOR'].includes(userRole)) {
+    if (!['ADMIN', 'OPERATOR', 'MANAGER'].includes(userRole || '')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (transfer.status === 'DONE') {
+    if (transferData.status === 'DONE') {
       return NextResponse.json({ error: 'Transfer already completed' }, { status: 400 });
     }
 
-    if (transfer.status !== 'DRAFT') {
-      return NextResponse.json(
-        { error: 'Transfer must be in DRAFT status to dispatch' },
-        { status: 400 }
-      );
+    if (transferData.status !== 'DRAFT') {
+      return NextResponse.json({ error: 'Transfer must be in DRAFT status to dispatch' }, { status: 400 });
     }
 
-    // Verify Operator has access to source warehouse
     if (userRole === 'OPERATOR') {
-      const sourceWarehouseIdStr = transfer.sourceWarehouseId.toString();
-      const hasAccess = assignedWarehouses.some((whId: any) => {
-        const whIdStr = whId?.toString ? whId.toString() : String(whId);
-        return whIdStr === sourceWarehouseIdStr;
-      });
-      
+      const sourceWarehouseStr = transferData.sourceWarehouseId?.toString();
+      const hasAccess = assignedWarehouses.some((whId: any) => String(whId) === sourceWarehouseStr);
       if (!hasAccess) {
-        return NextResponse.json(
-          { error: 'You do not have access to dispatch from this warehouse' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'You do not have access to dispatch from this warehouse' }, { status: 403 });
       }
     }
 
-    // Check stock availability at source
-    const stockIssues: any[] = [];
-    for (const line of transfer.lines) {
-      // Convert warehouse ID to ObjectId if needed
-      const sourceWarehouseIdObj = transfer.sourceWarehouseId instanceof mongoose.Types.ObjectId 
-        ? transfer.sourceWarehouseId 
-        : new mongoose.Types.ObjectId(transfer.sourceWarehouseId);
+    const { checkStockAvailability, getTotalStock } = await import('@/lib/services/stockService');
+    
+    // Execute transfer dispatch in atomic transaction
+    await adminDb.runTransaction(async (t) => {
+      const docSnap = await t.get(transferRef);
+      if (!docSnap.exists) throw new Error("Transfer not found");
+      if (docSnap.data()?.status !== 'DRAFT') throw new Error("Transfer is no longer in DRAFT status");
       
-      // Convert product ID to ObjectId if needed
-      const productIdObj = line.productId instanceof mongoose.Types.ObjectId 
-        ? line.productId 
-        : new mongoose.Types.ObjectId(line.productId);
-      
-      // Convert location ID to ObjectId if provided
-      const locationIdObj = line.sourceLocationId 
-        ? (line.sourceLocationId instanceof mongoose.Types.ObjectId 
-            ? line.sourceLocationId 
-            : new mongoose.Types.ObjectId(line.sourceLocationId))
-        : undefined;
+      const stockIssues: any[] = [];
+      for (const line of (transferData.lines || [])) {
+        let stockCheck = await checkStockAvailability(
+          line.productId?.toString(),
+          transferData.sourceWarehouseId?.toString(),
+          line.sourceLocationId?.toString() || undefined,
+          line.quantity,
+          t
+        );
 
-      // First check at specific location if provided
-      let stockCheck = await checkStockAvailability(
-        productIdObj,
-        sourceWarehouseIdObj,
-        line.quantity,
-        locationIdObj
-      );
+        if (!stockCheck.isAvailable) {
+          const totalStock = await getTotalStock(line.productId?.toString(), transferData.sourceWarehouseId?.toString(), t);
+          if (totalStock >= line.quantity) {
+             // Let it bypass only if it passes globally
+             stockCheck = { isAvailable: true, currentStock: totalStock, shortage: 0 };
+          }
+        }
 
-      // If not available at specific location, check total stock across all locations in warehouse
-      if (!stockCheck.available) {
-        const { getTotalStock } = await import('@/lib/services/stockService');
-        const totalStock = await getTotalStock(productIdObj, sourceWarehouseIdObj);
-        if (totalStock >= line.quantity) {
-          // Total stock is sufficient, allow the transfer (will use stock from any location)
-          stockCheck = { available: true, availableQuantity: totalStock };
-        } else {
-          stockCheck = { available: false, availableQuantity: totalStock };
+        if (!stockCheck.isAvailable) {
+          stockIssues.push({
+            productId: line.productId,
+            quantity: line.quantity,
+            available: stockCheck.currentStock,
+          });
         }
       }
 
-      if (!stockCheck.available) {
-        stockIssues.push({
+      if (stockIssues.length > 0) {
+        throw new Error('Insufficient stock at source warehouse: ' + JSON.stringify(stockIssues));
+      }
+
+      for (const line of (transferData.lines || [])) {
+        await updateStock(
+          line.productId?.toString(),
+          transferData.sourceWarehouseId?.toString(),
+          line.sourceLocationId?.toString(),
+          -(line.quantity),
+          t
+        );
+
+        const movementRef = adminDb.collection('stockMovements').doc();
+        t.set(movementRef, {
+          type: 'TRANSFER',
+          reason: 'TRANSFER_OUT',
           productId: line.productId,
-          quantity: line.quantity,
-          available: stockCheck.availableQuantity,
+          warehouseFromId: transferData.sourceWarehouseId,
+          warehouseToId: transferData.targetWarehouseId,
+          locationFromId: line.sourceLocationId || null,
+          locationToId: line.targetLocationId || null,
+          quantity: -(line.quantity),
+          referenceId: params.id,
+          createdBy: userId || null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
       }
-    }
 
-    if (stockIssues.length > 0) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient stock at source warehouse',
-          stockIssues,
-        },
-        { status: 400 }
-      );
-    }
+      const shipmentRef = adminDb.collection('shipments').doc();
+      t.set(shipmentRef, {
+        type: 'TRANSFER',
+        linkedDocumentId: params.id,
+        linkedDocumentType: 'TRANSFER',
+        origin: { type: 'WAREHOUSE', warehouseId: transferData.sourceWarehouseId },
+        destination: { type: 'WAREHOUSE', warehouseId: transferData.targetWarehouseId },
+        cargo: (transferData.lines || []).map((l: any) => ({ productId: l.productId, quantity: l.quantity })),
+        status: 'IN_TRANSIT',
+        riskScore: 0,
+        riskHistory: [],
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
 
-    // Update stock: decrement from source only (target will be incremented on acceptance)
-    for (const line of transfer.lines) {
-      const productIdObj = line.productId instanceof mongoose.Types.ObjectId 
-        ? line.productId 
-        : new mongoose.Types.ObjectId(line.productId);
-      const sourceWarehouseIdObj = transfer.sourceWarehouseId instanceof mongoose.Types.ObjectId 
-        ? transfer.sourceWarehouseId 
-        : new mongoose.Types.ObjectId(transfer.sourceWarehouseId);
-      const sourceLocationIdObj = line.sourceLocationId 
-        ? (line.sourceLocationId instanceof mongoose.Types.ObjectId 
-            ? line.sourceLocationId 
-            : new mongoose.Types.ObjectId(line.sourceLocationId))
-        : undefined;
-      const targetWarehouseIdObj = transfer.targetWarehouseId instanceof mongoose.Types.ObjectId 
-        ? transfer.targetWarehouseId 
-        : new mongoose.Types.ObjectId(transfer.targetWarehouseId);
-      const targetLocationIdObj = line.targetLocationId 
-        ? (line.targetLocationId instanceof mongoose.Types.ObjectId 
-            ? line.targetLocationId 
-            : new mongoose.Types.ObjectId(line.targetLocationId))
-        : undefined;
+      t.update(transferRef, {
+        status: 'IN_TRANSIT',
+        shipmentId: shipmentRef.id,
+        dispatchedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    });
 
-      await updateStock(
-        productIdObj,
-        sourceWarehouseIdObj,
-        sourceLocationIdObj,
-        -line.quantity,
-        'TRANSFER',
-        'TRANSFER',
-        new mongoose.Types.ObjectId(transfer._id.toString()),
-        userId,
-        sourceWarehouseIdObj,
-        sourceLocationIdObj,
-        targetWarehouseIdObj,
-        targetLocationIdObj
-      );
-    }
-
-    // Update transfer status to IN_TRANSIT
-    transfer.status = 'IN_TRANSIT';
-    transfer.dispatchedAt = new Date();
-    await transfer.save();
-
-    const populated = await Transfer.findById(transfer._id)
-      .populate('sourceWarehouseId', 'name code')
-      .populate('targetWarehouseId', 'name code')
-      .populate('requisitionId', 'requisitionNumber')
-      .populate('deliveryId', 'deliveryNumber')
-      .populate('createdBy', 'name email')
-      .populate('validatedBy', 'name email')
-      .populate('lines.productId', 'name sku')
-      .populate('lines.sourceLocationId', 'name code')
-      .populate('lines.targetLocationId', 'name code');
-
-    return NextResponse.json(populated);
+    return NextResponse.json({ success: true, message: 'Transfer dispatched' });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

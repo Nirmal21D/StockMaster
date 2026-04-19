@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Printer, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
-import { useSession } from 'next-auth/react';
-
+import { useSession } from '@/components/AuthProvider';
 interface Delivery {
   _id: string;
   deliveryNumber: string;
@@ -341,10 +340,11 @@ export default function DeliveryDetailPage() {
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Source Warehouse
+              To (Warehouse / Customer)
             </label>
             <p className="text-foreground">
-              {delivery.warehouseId?.name} ({delivery.warehouseId?.code})
+              {delivery.targetWarehouseId?.name && `${delivery.targetWarehouseId.name} (${delivery.targetWarehouseId.code})`}
+              {!delivery.targetWarehouseId && (delivery.customerName || '-')}
             </p>
           </div>
 

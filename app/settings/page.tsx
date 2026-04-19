@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Warehouse, MapPin } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/AuthProvider';
 import Link from 'next/link';
 
 interface Warehouse {
