@@ -20,7 +20,7 @@ const getTrafficDelayMinutes = async (lat: number, lng: number): Promise<number>
          const durationTraffic = element.duration_in_traffic?.value || duration;
          return Math.max(0, Math.floor((durationTraffic - duration) / 60));
       }
-   } catch (err) {
+   } catch (err: any) {
       console.error('Google Maps API Error:', err);
    }
    return 0;
@@ -48,7 +48,7 @@ const getWeatherSeverity = async (lat: number, lng: number): Promise<number> => 
            'Clouds': 20
         };
         return severityMap[condition] || 15;
-    } catch (err) {
+    } catch (err: any) {
         console.error('Weather API Error:', err);
     }
     return 15;

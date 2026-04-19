@@ -105,7 +105,7 @@ export default function NewTransferPage() {
       const warehousesData = await warehousesRes.json();
       setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
       setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     }
   };
@@ -131,7 +131,7 @@ export default function NewTransferPage() {
           }))
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch requisition:', err);
     }
   };
@@ -157,7 +157,7 @@ export default function NewTransferPage() {
           }))
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch delivery:', err);
     }
   };
@@ -185,7 +185,7 @@ export default function NewTransferPage() {
         
         setAvailableDeliveries(filtered);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch available deliveries:', err);
     }
   };
@@ -218,7 +218,7 @@ export default function NewTransferPage() {
           }))
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch selected delivery:', err);
       setError('Failed to load delivery details');
     }
@@ -233,7 +233,7 @@ export default function NewTransferPage() {
       } else {
         setTargetLocations(data || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch locations:', err);
     }
   };

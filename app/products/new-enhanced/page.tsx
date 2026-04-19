@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/components/AuthProvider';
-import { ArrowLeft, Save, Upload, Download, FileSpreadsheet, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Download, FileSpreadsheet, Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import ExcelDropzone from '@/components/ExcelDropzone';
 import ImportPreview from '@/components/ImportPreview';
 import ExcelImportService, { ProductImportData, ExcelImportResult } from '@/lib/services/excelImportService';
@@ -44,8 +45,8 @@ export default function NewProductPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-white mb-2">Access Denied</h2>
-          <p className="text-gray-400">You don't have permission to create products.</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have permission to create products.</p>
         </div>
       </div>
     );
@@ -161,29 +162,33 @@ export default function NewProductPage() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-6 max-w-6xl mx-auto"
+    >
+      <div className="mb-8">
         <div className="flex items-center space-x-4 mb-4">
           <Link
             href="/products"
-            className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center text-muted-foreground hover:text-foreground transition-all duration-200 group"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Products
           </Link>
         </div>
         
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-2">
           Add New Products
         </h1>
-        <p className="text-gray-400">
-          Choose between manual entry for single products or Excel import for bulk operations.
+        <p className="text-muted-foreground text-lg">
+          Onboard single SKUs or execute massive catalog imports with SupplyMind engine.
         </p>
       </div>
 
       {/* Mode Selection */}
-      <div className="mb-6">
-        <div className="flex space-x-4">
+      <div className="mb-8">
+        <div className="flex p-1.5 bg-muted/30 backdrop-blur-md rounded-xl border border-black/5 dark:border-white/5 w-fit">
           <button
             onClick={() => {
               setMode('manual');
@@ -191,10 +196,10 @@ export default function NewProductPage() {
               setImportResult(null);
               setError('');
             }}
-            className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+            className={`px-8 py-3 rounded-lg font-bold transition-all duration-300 flex items-center space-x-2 ${
               mode === 'manual'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] scale-[1.02]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -208,10 +213,10 @@ export default function NewProductPage() {
               setImportResult(null);
               setError('');
             }}
-            className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+            className={`px-8 py-3 rounded-lg font-bold transition-all duration-300 flex items-center space-x-2 ${
               mode === 'excel'
-                ? 'bg-green-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] scale-[1.02]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -221,194 +226,230 @@ export default function NewProductPage() {
       </div>
 
       {/* Error Display */}
-      {error && (
-        <div className="mb-6 bg-red-500/20 border border-red-500 rounded-lg p-4">
-          <p className="text-red-400 font-medium">{error}</p>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-8 bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3 backdrop-blur-sm"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            <p className="text-destructive font-semibold">{error}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Manual Entry Mode */}
-      {mode === 'manual' && (
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Product Information</h2>
-          
-          <form onSubmit={handleManualSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter product name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  SKU *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter SKU"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter category"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Unit *
-                </label>
-                <select
-                  required
-                  value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="pcs">Pieces</option>
-                  <option value="kg">Kilograms</option>
-                  <option value="ltr">Liters</option>
-                  <option value="box">Box</option>
-                  <option value="pack">Pack</option>
-                  <option value="roll">Roll</option>
-                  <option value="meter">Meter</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Price
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Reorder Level *
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={formData.reorderLevel}
-                  onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  ABC Classification
-                </label>
-                <select
-                  value={formData.abcClass}
-                  onChange={(e) => setFormData({ ...formData, abcClass: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select ABC Class</option>
-                  <option value="A">A - High Value</option>
-                  <option value="B">B - Medium Value</option>
-                  <option value="C">C - Low Value</option>
-                </select>
-              </div>
+      <AnimatePresence mode="wait">
+        {mode === 'manual' ? (
+          <motion.div 
+            key="manual"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="bg-card/40 backdrop-blur-2xl rounded-2xl p-8 border border-black/10 dark:border-white/10 shadow-2xl relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+               <Sparkles className="w-24 h-24" />
             </div>
 
-            <div className="flex justify-end space-x-4">
-              <Link
-                href="/products"
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-              >
-                {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-                <Save className="w-4 h-4" />
-                <span>{loading ? 'Creating...' : 'Create Product'}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+            <h2 className="text-xl font-bold text-foreground mb-8 flex items-center gap-2">
+               <Plus className="w-5 h-5 text-primary" />
+               Product Intelligence Profile
+            </h2>
+            
+            <form onSubmit={handleManualSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="Enter global product name"
+                  />
+                </div>
 
-      {/* Excel Import Mode */}
-      {mode === 'excel' && (
-        <div className="space-y-6">
-          {/* Download Template */}
-          <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <Download className="w-5 h-5 text-blue-400 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-blue-400 font-medium mb-1">Download Template</h3>
-                <p className="text-gray-300 text-sm mb-3">
-                  Download the Excel template with the required column format and sample data.
-                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    SKU Identifier *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                    placeholder="E.g., LIFE-PH-001"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    Strategic Category
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="Pharmaceuticals, Electronics, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    Measurement Unit *
+                  </label>
+                  <select
+                    required
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none outline-none"
+                  >
+                    <option value="pcs">Pieces (pcs)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                    <option value="ltr">Liters (ltr)</option>
+                    <option value="box">Box (box)</option>
+                    <option value="pack">Pack (pack)</option>
+                    <option value="roll">Roll (roll)</option>
+                    <option value="meter">Meter (meter)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    Unit Valuation ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    Safety Reorder Level *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={formData.reorderLevel}
+                    onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="Min stock threshold"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-semibold text-muted-foreground ml-1">
+                    ABC Classification (Value Priority)
+                  </label>
+                  <select
+                    value={formData.abcClass}
+                    onChange={(e) => setFormData({ ...formData, abcClass: e.target.value })}
+                    className="w-full px-5 py-3 bg-muted/20 border border-black/10 dark:border-white/10 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none outline-none"
+                  >
+                    <option value="">Auto-calculate (Recommended)</option>
+                    <option value="A">Class A - High Value (Critical)</option>
+                    <option value="B">Class B - Medium Value (Strategic)</option>
+                    <option value="C">Class C - Low Value (General)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end items-center gap-6 pt-6 border-t border-black/10 dark:border-white/10">
+                <Link
+                  href="/products"
+                  className="text-muted-foreground hover:text-foreground font-semibold px-4 py-2 transition-colors"
+                >
+                  Cancel
+                </Link>
                 <button
-                  onClick={downloadTemplate}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
+                  type="submit"
+                  disabled={loading}
+                  className="px-10 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-3 scale-100 hover:scale-[1.03] active:scale-[0.98]"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download Products Template</span>
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  <span>{loading ? 'Transmitting...' : 'Execute Onboarding'}</span>
                 </button>
               </div>
+            </form>
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="excel"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            {/* Download Template */}
+            <div className="bg-primary/10 border border-primary/20 backdrop-blur-xl rounded-2xl p-6 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 opacity-10 group-hover:rotate-12 transition-transform">
+                 <Download className="w-32 h-32" />
+              </div>
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                  <Download className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-foreground mb-1">Standardized Intelligence Template</h3>
+                  <p className="text-muted-foreground mb-4 max-w-xl">
+                    Download the SupplyMind standardized format to ensure high-fidelity data injection for bulk catalog operations.
+                  </p>
+                  <button
+                    onClick={downloadTemplate}
+                    className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-bold hover:shadow-lg transition-all flex items-center space-x-2 text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Products Template (.xlsx)</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Upload Step */}
-          {importStep === 'upload' && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Upload Excel File</h2>
-              <ExcelDropzone
-                onFileProcessed={handleExcelFileProcessed}
-                onError={handleExcelError}
+            {/* Upload Step */}
+            {importStep === 'upload' && (
+              <div className="bg-card/40 backdrop-blur-2xl rounded-2xl p-8 border border-black/10 dark:border-white/10 shadow-2xl">
+                <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                   <Upload className="w-5 h-5 text-primary" />
+                   High-Speed Data Ingestion
+                </h2>
+                <ExcelDropzone
+                  onFileProcessed={handleExcelFileProcessed}
+                  onError={handleExcelError}
+                />
+              </div>
+            )}
+
+            {/* Preview Step */}
+            {importStep === 'preview' && importResult && (
+              <ImportPreview
+                result={importResult}
+                columns={productColumns}
+                onConfirm={handleImportConfirm}
+                onCancel={handleImportCancel}
+                isProcessing={loading}
               />
-            </div>
-          )}
-
-          {/* Preview Step */}
-          {importStep === 'preview' && importResult && (
-            <ImportPreview
-              result={importResult}
-              columns={productColumns}
-              onConfirm={handleImportConfirm}
-              onCancel={handleImportCancel}
-              isProcessing={loading}
-            />
-          )}
-        </div>
-      )}
-    </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

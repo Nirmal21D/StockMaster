@@ -33,6 +33,9 @@ export default async function DashboardPage() {
             pendingTransfers: 0,
             slowDeadStockCount: 0,
             stockoutEvents: 0,
+            revenueAtRisk: 0,
+            impactedOrdersCount: 0,
+            vendorDiversificationIndex: 100,
           }}
         />
       </Suspense>

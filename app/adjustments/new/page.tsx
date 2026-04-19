@@ -72,7 +72,7 @@ export default function NewAdjustmentPage() {
       const warehousesData = await warehousesRes.json();
       setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
       setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     }
   };
@@ -82,7 +82,7 @@ export default function NewAdjustmentPage() {
       const res = await fetch(`/api/locations?warehouseId=${warehouseId}`);
       const data = await res.json();
       setLocations(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch locations:', err);
     }
   };
@@ -100,7 +100,7 @@ export default function NewAdjustmentPage() {
           setFormData({ ...formData, newQuantity: (data.quantity || 0).toString() });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch stock:', err);
       setCurrentStock(0);
     } finally {

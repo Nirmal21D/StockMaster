@@ -74,7 +74,7 @@ export default function NewDeliveryPage() {
       const warehousesData = await warehousesRes.json();
       setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
       setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     }
   };
@@ -84,7 +84,7 @@ export default function NewDeliveryPage() {
       const res = await fetch(`/api/locations?warehouseId=${warehouseId}`);
       const data = await res.json();
       setLocations(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch locations:', err);
     }
   };
@@ -106,7 +106,7 @@ export default function NewDeliveryPage() {
                 responsiblePerson = managers[0].name || '';
               }
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Failed to fetch manager:', err);
           }
 
@@ -128,7 +128,7 @@ export default function NewDeliveryPage() {
           })));
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch requisition:', err);
     }
   };

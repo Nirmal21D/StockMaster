@@ -30,7 +30,7 @@ export default function LiveRiskTicker() {
           });
           setEvents(mapped);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Ticker fetch failed", err);
       }
     };

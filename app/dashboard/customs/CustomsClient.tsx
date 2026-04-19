@@ -31,7 +31,7 @@ function CustomsClientContent() {
       const res = await fetch('/api/shipments?type=INTERNATIONAL');
       const data = await res.json();
       setShipments(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch shipments', err);
     } finally {
       setLoading(false);

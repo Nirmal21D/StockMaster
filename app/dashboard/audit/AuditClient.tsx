@@ -31,7 +31,7 @@ export default function AuditClient() {
         
         if (lRes.ok) setLogs(await lRes.json());
         if (dRes.ok) setDecisions(await dRes.json());
-      } catch (err) {
+      } catch (err: any) {
         console.error('Audit fetch failed', err);
       } finally {
         setLoading(false);

@@ -45,7 +45,7 @@ export default function VendorClient() {
           const sData = await sRes.json();
           setShipments(sData);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch vendor data', err);
       } finally {
         setLoading(false);

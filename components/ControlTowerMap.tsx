@@ -17,7 +17,7 @@ export default function ControlTowerMap() {
           const data = await res.json();
           setDecisions(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch decisions", err);
       }
       setLoading(false);
@@ -42,7 +42,7 @@ export default function ControlTowerMap() {
           const errData = await res.json();
           alert(`Error: ${errData.error}`);
         }
-     } catch (err) {
+     } catch (err: any) {
        console.error("Approval failed", err);
      }
      setExecuting(false);
@@ -56,7 +56,7 @@ export default function ControlTowerMap() {
          const data = await res.json();
          alert(`Risk Scan Complete! Processed ${data.processed} shipments.`);
        }
-     } catch (err) {
+     } catch (err: any) {
        console.error("Risk scan failed", err);
      }
      setExecuting(false);

@@ -80,7 +80,7 @@ export default function NewRequisitionPage() {
       const warehousesData = await warehousesRes.json();
       setProducts(Array.isArray(productsData.products) ? productsData.products : Array.isArray(productsData) ? productsData : []);
       setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     }
   };

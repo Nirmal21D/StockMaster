@@ -22,7 +22,7 @@ export default function LocationAutocomplete({ value, onChange, placeholder, lab
       libraries: ['places']
     });
 
-    loader.load().then(() => {
+    (loader as any).importLibrary('places').then(() => {
       if (!inputRef.current) return;
 
       const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
@@ -38,7 +38,7 @@ export default function LocationAutocomplete({ value, onChange, placeholder, lab
       });
       
       setLoading(false);
-    }).catch(e => {
+    }).catch((e: any) => {
        console.error('Maps Loader Error', e);
        setLoading(false);
     });

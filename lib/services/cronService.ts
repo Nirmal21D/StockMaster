@@ -24,7 +24,7 @@ export const initCron = () => {
             });
             
             console.log(`[${new Date().toISOString()}] Automated Risk Scan Completed: ${results?.length || 0} shipments analyzed.`);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Automated Risk Scan Failed:', err);
             await adminDb.collection('auditLogs').add({
                 type: 'AUTOMATED_SCAN_FAILURE',

@@ -114,7 +114,7 @@ export const runCascadeSimulation = async (shipmentId: string, riskScore: number
                await logEvent('INFO', `Vertex AI Decision Generated Successfully`, { shipmentId, optionsCount: aiOptions.length });
            }
         }
-    } catch(err) {
+    } catch(err: any) {
         await logEvent('ERROR', `Vertex AI Generation Failed`, { shipmentId, error: err.message });
         console.error("Gemini Failure:", err);
         // Fallback

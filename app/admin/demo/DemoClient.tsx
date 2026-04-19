@@ -29,7 +29,7 @@ export default function DemoClient() {
       if (res.ok) {
         setLastAction(`Success: ${label} Triggered`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     } finally {
       setLoading(null);
